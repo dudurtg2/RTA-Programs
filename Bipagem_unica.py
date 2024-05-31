@@ -6,7 +6,9 @@ import time
 import pygetwindow as gw
 import winsound
 import keyboard
+import os
 
+print("Current working directory: ", os.getcwd())
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -49,7 +51,7 @@ class MouseCoordinateApp(QWidget):
         self.label_tempo1 = QLabel("Tempo de colagem (s):")
         tempo_layout.addWidget(self.label_tempo1)
         self.tempo1_spinbox = QSpinBox()
-        self.tempo1_spinbox.setRange(100, 5000)  
+        self.tempo1_spinbox.setRange(100, 5000) 
         tempo_layout.addWidget(self.tempo1_spinbox)
         layout.addLayout(tempo_layout)
 
@@ -57,7 +59,7 @@ class MouseCoordinateApp(QWidget):
         self.label_tempo2 = QLabel("Tempo de press enter:")
         tempo_layout.addWidget(self.label_tempo2)
         self.tempo2_spinbox = QSpinBox()
-        self.tempo2_spinbox.setRange(100, 5000) 
+        self.tempo2_spinbox.setRange(100, 5000)  
         tempo_layout.addWidget(self.tempo2_spinbox)
         layout.addLayout(tempo_layout)
 
@@ -65,7 +67,7 @@ class MouseCoordinateApp(QWidget):
         self.label_tempo3 = QLabel("Tempo do mouse:")
         tempo_layout.addWidget(self.label_tempo3)
         self.tempo3_spinbox = QSpinBox()
-        self.tempo3_spinbox.setRange(250, 5000)  
+        self.tempo3_spinbox.setRange(500, 5000)  
         tempo_layout.addWidget(self.tempo3_spinbox)
         layout.addLayout(tempo_layout)
 
@@ -73,7 +75,12 @@ class MouseCoordinateApp(QWidget):
 
         self.positions = {}
         self.counter = 0
+
+        
         self.entry.returnPressed.connect(self.start_inserir_codigo)
+
+        self.codigos_inseridos = self.carregar_codigos_inseridos()
+
     def set_position1(self):
         print("Posicione o mouse e pressione Enter.")
         keyboard.wait("enter")
@@ -88,16 +95,36 @@ class MouseCoordinateApp(QWidget):
         self.positions['pos2'] = (x, y)
         self.coord_label2.setText(f"Posição 2: ({x}, {y})")
 
+    def carregar_codigos_inseridos(self):
+        if os.path.exists("codigos_inseridos.txt"):
+            with open("codigos_inseridos.txt", "r") as file:
+                return set(file.read().splitlines())
+        return set()
+
+    def salvar_codigo(self, codigo):
+        with open("codigos_inseridos.txt", "a") as file:
+            file.write(f"{codigo}\n")
+
     def start_inserir_codigo(self):
         if 'pos1' in self.positions and 'pos2' in self.positions:
             codigo_barras = self.entry.text()
             if len(codigo_barras) < 1:
                 print("Código de barras inválido. Insira um código com pelo menos 1 caractere.")
+                
                 return
 
-            tempo1 = self.tempo1_spinbox.value() / 1000 
-            tempo2 = self.tempo2_spinbox.value() / 1000 
-            tempo3 = self.tempo3_spinbox.value() / 1000 
+            if codigo_barras in self.codigos_inseridos:
+                print("Código de barras já inserido.")
+                self.entry.clear() 
+                self.bring_to_front()
+                return
+
+            self.codigos_inseridos.add(codigo_barras)
+            self.salvar_codigo(codigo_barras)
+
+            tempo1 = self.tempo1_spinbox.value() / 1000
+            tempo2 = self.tempo2_spinbox.value() / 1000
+            tempo3 = self.tempo3_spinbox.value() / 1000
 
             inserir_codigo(codigo_barras, *self.positions['pos1'], *self.positions['pos2'], tempo1, tempo2, tempo3)
             self.entry.clear() 
