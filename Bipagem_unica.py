@@ -12,6 +12,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from PyQt5.QtWidgets import QFileDialog
 
+
+
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -174,31 +176,39 @@ class MouseCoordinateApp(QWidget):
         window = gw.getWindowsWithTitle(self.windowTitle())[0]
         if window:
             window.activate()
-
+    
     def exportar_lista(self):
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getSaveFileName(self, "Salvar Lista", "", "PDF Files (*.pdf);;All Files (*)", options=options)
-    
+
         if file_path:
             c = canvas.Canvas(file_path, pagesize=letter)
-            
+
             now = datetime.datetime.now()
             formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
-            
+
             c.drawString(100, 750,"Hora e Dia: " + formatted_now)
-            c.drawString(100, 735,"Funcionario:" + self.nome_input.text())
-            c.drawString(100, 720,"Entregador:" + self.entregador_input.text())
-            c.drawString(100, 705,"Contagem:" + self.counter_label.text())
-            c.drawString(100, 690,"Confirme as informações")
+            c.drawString(100, 735,"Funcionario: " + self.nome_input.text())
+            c.drawString(100, 720,"Entregador: " + self.entregador_input.text())
+            c.drawString(100, 705, self.counter_label.text())
+            c.drawString(100, 690,"Por favor, Confirme as informações")
             c.drawString(100, 670,"Codigos inseridos:")
 
-            y = 665  
+            y = 650  
             for codigo in self.codigos_inseridos:
                 c.drawString(100, y, str(codigo))
                 y -= 12 
-    
+
+            #img_path = os.path.join(os.path.dirname(__file__), "lc.png")  
+            #try:
+            #    c.drawImage(img_path, 400, 680, width=100, height=100) 
+            #except Exception as e:
+            #    print("Erro ao desenhar a imagem: ", e)
+
             c.save()
-            
+
+        self.counter = 0
+        self.counter_label.setText(f"Contador: {self.counter}")
         self.resetar_lista()
 
     def resetar_lista(self):
