@@ -58,29 +58,34 @@ class MouseCoordinateApp(QWidget):
         layout.addWidget(self.entry)
 
         tempo_layout = QHBoxLayout()
+        layout.addLayout(tempo_layout)
+
         self.label_tempo1 = QLabel("Tempo de colagem:")
         tempo_layout.addWidget(self.label_tempo1)
         self.tempo1_spinbox = QSpinBox()
         self.tempo1_spinbox.setRange(0, 5000)
         tempo_layout.addWidget(self.tempo1_spinbox)
-        layout.addLayout(tempo_layout)
 
-        tempo_layout = QHBoxLayout()
         self.label_tempo2 = QLabel("Tempo de espera:")
         tempo_layout.addWidget(self.label_tempo2)
         self.tempo2_spinbox = QSpinBox()
         self.tempo2_spinbox.setRange(0, 5000)
         tempo_layout.addWidget(self.tempo2_spinbox)
-        layout.addLayout(tempo_layout)
 
         self.counter_label = QLabel("Contador: 0")
         layout.addWidget(self.counter_label)
 
+        self.layout_search_label = QHBoxLayout()
         self.search_label = QLabel("Procurar código:")
-        layout.addWidget(self.search_label)
+        self.layout_search_label.addWidget(self.search_label)
         self.search_input = QLineEdit()
+        self.layout_search_label.addWidget(self.search_input)
         self.search_input.textChanged.connect(self.filtrar_codigos)
-        layout.addWidget(self.search_input)
+        layout.addLayout(self.layout_search_label) 
+        
+        self.delete_button = QPushButton("Delete o codigo selecionado")
+        self.delete_button.clicked.connect(self.deletar_codigo)
+        layout.addWidget(self.delete_button)
 
         self.codigos_list_widget = QListWidget()
         layout.addWidget(self.codigos_list_widget)
@@ -90,17 +95,17 @@ class MouseCoordinateApp(QWidget):
         self.adicionar_codigo_input = QLineEdit()
         layout.addWidget(self.adicionar_codigo_input)
 
+        self.button = QHBoxLayout()
         self.export_button = QPushButton("Exportar Lista")
+        self.button.addWidget(self.export_button)
         self.export_button.clicked.connect(self.exportar_lista)
-        layout.addWidget(self.export_button)
 
         self.reset_list_button = QPushButton("Resetar Lista")
+        self.button.addWidget(self.reset_list_button)
         self.reset_list_button.clicked.connect(self.resetar_lista)
-        layout.addWidget(self.reset_list_button)
 
-        self.delete_button = QPushButton("Delete")
-        self.delete_button.clicked.connect(self.deletar_codigo)
-        layout.addWidget(self.delete_button)
+        layout.addLayout(self.button)
+        
 
         self.messagem = QLabel("Defina as posicoes dos mouse e aperte Enter.")
         layout.addWidget(self.messagem)
@@ -274,9 +279,9 @@ def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2):
             pyautogui.moveTo(*coordenadas, duration=0)
             pyautogui.click()
             pyautogui.hotkey('ctrl', 'v')
-            time.sleep(tempo1)  # colagem
+            time.sleep(tempo1)  
             pyautogui.press('enter')
-            time.sleep(tempo1)  # colagem
+            time.sleep(tempo1)  
         time.sleep(tempo2)
 
 if __name__ == "__main__":
