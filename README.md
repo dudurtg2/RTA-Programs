@@ -21,3 +21,7 @@
  - A bipagem será realizada automaticamente, e o contador será atualizado.
  - Exporte a lista de mercadorias bipadas quando desejar.
 Com este automatizador, o processo de bipagem de mercadorias se torna mais eficiente e menos suscetível a erros, proporcionando ganhos significativos de produtividade para a transportadora.
+
+
+# LAYOUT DO PROGRAMA
+   ![image](https://github.com/dudurtg2/LC_transporte_system/assets/83459496/8365793a-da69-4514-a291-1925f40753c5)
