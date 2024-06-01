@@ -60,7 +60,7 @@ class MouseCoordinateApp(QWidget):
         layout.addWidget(self.entry)
 
         tempo_layout = QHBoxLayout()
-        self.label_tempo1 = QLabel("Tempo de colagem (s):")
+        self.label_tempo1 = QLabel("Tempo de colagem:")
         tempo_layout.addWidget(self.label_tempo1)
         self.tempo1_spinbox = QSpinBox()
         self.tempo1_spinbox.setRange(0, 5000) 
@@ -68,20 +68,13 @@ class MouseCoordinateApp(QWidget):
         layout.addLayout(tempo_layout)
 
         tempo_layout = QHBoxLayout()
-        self.label_tempo2 = QLabel("Tempo de press enter:")
+        self.label_tempo2 = QLabel("Tempo de espera:")
         tempo_layout.addWidget(self.label_tempo2)
         self.tempo2_spinbox = QSpinBox()
         self.tempo2_spinbox.setRange(0, 5000)
         tempo_layout.addWidget(self.tempo2_spinbox)
         layout.addLayout(tempo_layout)
 
-        tempo_layout = QHBoxLayout()
-        self.label_tempo3 = QLabel("Tempo do mouse:")
-        tempo_layout.addWidget(self.label_tempo3)
-        self.tempo3_spinbox = QSpinBox()
-        self.tempo3_spinbox.setRange(0, 5000)
-        tempo_layout.addWidget(self.tempo3_spinbox)
-        layout.addLayout(tempo_layout)
 
         self.counter_label = QLabel("Contador: 0")
         layout.addWidget(self.counter_label)
@@ -159,10 +152,9 @@ class MouseCoordinateApp(QWidget):
             
 
             tempo1 = self.tempo1_spinbox.value() / 1000  
-            tempo2 = self.tempo2_spinbox.value() / 1000  
-            tempo3 = self.tempo3_spinbox.value() / 1000  
+            tempo2 = self.tempo2_spinbox.value() / 1000   
 
-            inserir_codigo(codigo_barras, *self.positions['pos1'], *self.positions['pos2'], tempo1, tempo2, tempo3)
+            inserir_codigo(codigo_barras, *self.positions['pos1'], *self.positions['pos2'], tempo1, tempo2)
             self.entry.clear() 
             self.counter += 1
             self.counter_label.setText(f"Contador: {self.counter}")
@@ -216,8 +208,10 @@ class MouseCoordinateApp(QWidget):
         if os.path.exists("codigos_inseridos.txt"):
             os.remove("codigos_inseridos.txt")
         self.update_codigos_list_widget()
+        self.counter = 0
+        self.counter_label.setText(f"Contador: {self.counter}")
 
-def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2, tempo3):
+def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2):
     coordenadas_abas = {
         'aba1': {'campo1': (x, y), 'campo2': (x, y)},
         'aba2': {'campo1': (x2, y2), 'campo2': (x2, y2)}
@@ -227,12 +221,13 @@ def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2, tempo3):
 
     for aba, campos in coordenadas_abas.items():
         for campo, coordenadas in campos.items():
-            pyautogui.moveTo(*coordenadas, duration=tempo3)
+            pyautogui.moveTo(*coordenadas, duration=0)
             pyautogui.click()
             pyautogui.hotkey('ctrl', 'v')
-            time.sleep(tempo1)
+            time.sleep(tempo1) # colagem
             pyautogui.press('enter')
-            time.sleep(tempo2)
+            time.sleep(tempo1) # colagem
+        time.sleep(tempo2)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
