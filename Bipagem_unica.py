@@ -12,8 +12,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from PyQt5.QtWidgets import QFileDialog
 
-
-
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -63,7 +61,7 @@ class MouseCoordinateApp(QWidget):
         self.label_tempo1 = QLabel("Tempo de colagem:")
         tempo_layout.addWidget(self.label_tempo1)
         self.tempo1_spinbox = QSpinBox()
-        self.tempo1_spinbox.setRange(0, 5000) 
+        self.tempo1_spinbox.setRange(0, 5000)
         tempo_layout.addWidget(self.tempo1_spinbox)
         layout.addLayout(tempo_layout)
 
@@ -75,12 +73,22 @@ class MouseCoordinateApp(QWidget):
         tempo_layout.addWidget(self.tempo2_spinbox)
         layout.addLayout(tempo_layout)
 
-
         self.counter_label = QLabel("Contador: 0")
         layout.addWidget(self.counter_label)
 
+        self.search_label = QLabel("Procurar código:")
+        layout.addWidget(self.search_label)
+        self.search_input = QLineEdit()
+        self.search_input.textChanged.connect(self.filtrar_codigos)
+        layout.addWidget(self.search_input)
+
         self.codigos_list_widget = QListWidget()
         layout.addWidget(self.codigos_list_widget)
+        
+        self.adicionar_codigos = QLabel("Insira manualmente o código de barras:")
+        layout.addWidget(self.adicionar_codigos)
+        self.adicionar_codigo_input = QLineEdit()
+        layout.addWidget(self.adicionar_codigo_input)
 
         self.export_button = QPushButton("Exportar Lista")
         self.export_button.clicked.connect(self.exportar_lista)
@@ -90,6 +98,10 @@ class MouseCoordinateApp(QWidget):
         self.reset_list_button.clicked.connect(self.resetar_lista)
         layout.addWidget(self.reset_list_button)
 
+        self.delete_button = QPushButton("Delete")
+        self.delete_button.clicked.connect(self.deletar_codigo)
+        layout.addWidget(self.delete_button)
+
         self.messagem = QLabel("Defina as posicoes dos mouse e aperte Enter.")
         layout.addWidget(self.messagem)
 
@@ -98,6 +110,8 @@ class MouseCoordinateApp(QWidget):
         self.positions = {}
         self.counter = 0
 
+        self.adicionar_codigo_input.returnPressed.connect(self.adicionar_codigo)
+        
         self.entry.returnPressed.connect(self.start_inserir_codigo)
 
         self.codigos_inseridos = self.carregar_codigos_inseridos()
@@ -125,13 +139,14 @@ class MouseCoordinateApp(QWidget):
 
     def salvar_codigo(self, codigo):
         with open("codigos_inseridos.txt", "a") as file:
-            if not file.tell():  
-                file.write("\n") 
+            if not file.tell():
+                file.write("\n")
             file.write(f"{codigo}\n")
 
     def update_codigos_list_widget(self):
         self.codigos_list_widget.clear()
         self.codigos_list_widget.addItems(self.codigos_inseridos)
+    
 
     def start_inserir_codigo(self):
         if 'pos1' in self.positions and 'pos2' in self.positions and self.nome_input.text() != '' and self.entregador_input.text() != '':
@@ -149,13 +164,12 @@ class MouseCoordinateApp(QWidget):
 
             self.codigos_inseridos.add(codigo_barras)
             self.salvar_codigo(codigo_barras)
-            
 
-            tempo1 = self.tempo1_spinbox.value() / 1000  
-            tempo2 = self.tempo2_spinbox.value() / 1000   
+            tempo1 = self.tempo1_spinbox.value() / 1000
+            tempo2 = self.tempo2_spinbox.value() / 1000
 
             inserir_codigo(codigo_barras, *self.positions['pos1'], *self.positions['pos2'], tempo1, tempo2)
-            self.entry.clear() 
+            self.entry.clear()
             self.counter += 1
             self.counter_label.setText(f"Contador: {self.counter}")
             self.bring_to_front()
@@ -168,7 +182,7 @@ class MouseCoordinateApp(QWidget):
         window = gw.getWindowsWithTitle(self.windowTitle())[0]
         if window:
             window.activate()
-    
+
     def exportar_lista(self):
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getSaveFileName(self, "Salvar Lista", "", "PDF Files (*.pdf);;All Files (*)", options=options)
@@ -179,23 +193,17 @@ class MouseCoordinateApp(QWidget):
             now = datetime.datetime.now()
             formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
 
-            c.drawString(100, 750,"Hora e Dia: " + formatted_now)
-            c.drawString(100, 735,"Funcionario: " + self.nome_input.text())
-            c.drawString(100, 720,"Entregador: " + self.entregador_input.text())
+            c.drawString(100, 750, "Hora e Dia: " + formatted_now)
+            c.drawString(100, 735, "Funcionario: " + self.nome_input.text())
+            c.drawString(100, 720, "Entregador: " + self.entregador_input.text())
             c.drawString(100, 705, self.counter_label.text())
-            c.drawString(100, 690,"Por favor, Confirme as informações")
-            c.drawString(100, 670,"Codigos inseridos:")
+            c.drawString(100, 690, "Por favor, Confirme as informações")
+            c.drawString(100, 670, "Codigos inseridos:")
 
-            y = 650  
+            y = 650
             for codigo in self.codigos_inseridos:
                 c.drawString(100, y, str(codigo))
-                y -= 12 
-
-            #img_path = os.path.join(os.path.dirname(__file__), "lc.png")  
-            #try:
-            #    c.drawImage(img_path, 400, 680, width=100, height=100) 
-            #except Exception as e:
-            #    print("Erro ao desenhar a imagem: ", e)
+                y -= 12
 
             c.save()
 
@@ -211,6 +219,48 @@ class MouseCoordinateApp(QWidget):
         self.counter = 0
         self.counter_label.setText(f"Contador: {self.counter}")
 
+    def deletar_codigo(self):
+        selected_items = self.codigos_list_widget.selectedItems()
+        if not selected_items:
+            return
+        for item in selected_items:
+            codigo = item.text()
+            self.codigos_inseridos.remove(codigo)
+            self.codigos_list_widget.takeItem(self.codigos_list_widget.row(item))
+        self.salvar_codigos_inseridos()
+        self.counter -= 1
+        self.counter_label.setText(f"Contador: {self.counter}")
+        
+    def salvar_codigos_inseridos(self):
+        with open("codigos_inseridos.txt", "w") as file:
+            for codigo in self.codigos_inseridos:
+                file.write(f"{codigo}\n")
+
+    def filtrar_codigos(self):
+        search_term = self.search_input.text().lower()
+        self.codigos_list_widget.clear()
+        for codigo in self.codigos_inseridos:
+            if search_term in codigo.lower():
+                self.codigos_list_widget.addItem(codigo)
+                
+    def adicionar_codigo(self):
+        codigo_barras = self.adicionar_codigo_input.text()
+        if codigo_barras in self.codigos_inseridos:
+                self.adicionar_codigo_input.clear()
+                self.bring_to_front()
+                winsound.Beep(820, 1000)
+                self.messagem.setText("Código de barras já inserido.")
+                return
+        if codigo_barras:  
+            self.codigos_inseridos.add(codigo_barras)
+            self.salvar_codigo(codigo_barras)
+            self.update_codigos_list_widget()
+            self.adicionar_codigo_input.clear()
+            self.counter += 1
+            self.counter_label.setText(f"Contador: {self.counter}")
+        else:
+            self.messagem.setText("Insira um código válido.")
+        
 def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2):
     coordenadas_abas = {
         'aba1': {'campo1': (x, y), 'campo2': (x, y)},
@@ -224,9 +274,9 @@ def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2):
             pyautogui.moveTo(*coordenadas, duration=0)
             pyautogui.click()
             pyautogui.hotkey('ctrl', 'v')
-            time.sleep(tempo1) # colagem
+            time.sleep(tempo1)  # colagem
             pyautogui.press('enter')
-            time.sleep(tempo1) # colagem
+            time.sleep(tempo1)  # colagem
         time.sleep(tempo2)
 
 if __name__ == "__main__":
