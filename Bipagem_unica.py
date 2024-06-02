@@ -1,6 +1,8 @@
 import datetime
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QSpinBox, QListWidget, QFileDialog
+from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
+from PyQt5.QtCore import Qt
 import pyautogui
 import pyperclip
 import time
@@ -15,7 +17,8 @@ from PyQt5.QtWidgets import QFileDialog
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Bipagem unica - C.E.O.S")
+        self.setWindowTitle("Sistema de bipagem unica")
+        
 
         layout = QVBoxLayout()
 
@@ -33,7 +36,8 @@ class MouseCoordinateApp(QWidget):
         self.layout_entregador.addWidget(self.entregador_input)
         layout.addLayout(self.layout_entregador)
 
-        self.label = QLabel("Clique nos botões para definir a posição do mouse:                    ")
+        self.label = QLabel("Clique nos botões para definir a posição do mouse:")
+        self.label.setStyleSheet("font-weight: bold;") 
         layout.addWidget(self.label)
 
         position_layout = QHBoxLayout()
@@ -51,11 +55,8 @@ class MouseCoordinateApp(QWidget):
         self.button2.clicked.connect(self.set_position2)
         position_layout.addWidget(self.button2)
         layout.addLayout(position_layout)
-
-        self.entry_label = QLabel("Insira o código de barras:")
-        layout.addWidget(self.entry_label)
-        self.entry = QLineEdit()
-        layout.addWidget(self.entry)
+        
+       
 
         tempo_layout = QHBoxLayout()
         layout.addLayout(tempo_layout)
@@ -71,12 +72,35 @@ class MouseCoordinateApp(QWidget):
         self.tempo2_spinbox = QSpinBox()
         self.tempo2_spinbox.setRange(0, 5000)
         tempo_layout.addWidget(self.tempo2_spinbox)
+        
+        tempo_layout_base = QHBoxLayout()
+        layout.addLayout(tempo_layout_base)
 
+        self.label_tempo_base = QLabel("Bipagem na base:")
+        tempo_layout_base.addWidget(self.label_tempo_base)
+        self.tempo_base_spinbox = QSpinBox()
+        self.tempo_base_spinbox.setRange(1, 5)
+        tempo_layout_base.addWidget(self.tempo_base_spinbox)
+
+        self.label_tempo_entregador = QLabel("Bipagem no entregador:")
+        tempo_layout_base.addWidget(self.label_tempo_entregador)
+        self.tempo_entregador_spinbox = QSpinBox()
+        self.tempo_entregador_spinbox.setRange(1, 5)
+        tempo_layout_base.addWidget(self.tempo_entregador_spinbox)
+        
+        self.label = QLabel("Clique no campo abaixo para inserir os códigos:")
+        self.label.setStyleSheet("font-weight: bold;") 
+        layout.addWidget(self.label)
+        
+        self.entry = QLineEdit()
+        layout.addWidget(self.entry)
+        
         self.counter_label = QLabel("Contador: 0")
+        self.counter_label.setStyleSheet("font-weight: bold;") 
         layout.addWidget(self.counter_label)
-
+        
         self.layout_search_label = QHBoxLayout()
-        self.search_label = QLabel("Procurar código:")
+        self.search_label = QLabel("Busca na lista:")
         self.layout_search_label.addWidget(self.search_label)
         self.search_input = QLineEdit()
         self.layout_search_label.addWidget(self.search_input)
@@ -84,6 +108,7 @@ class MouseCoordinateApp(QWidget):
         layout.addLayout(self.layout_search_label) 
         
         self.delete_button = QPushButton("Delete o codigo selecionado")
+        self.delete_button.setStyleSheet("color: red;")
         self.delete_button.clicked.connect(self.deletar_codigo)
         layout.addWidget(self.delete_button)
 
@@ -110,7 +135,19 @@ class MouseCoordinateApp(QWidget):
         self.messagem = QLabel("Defina as posicoes dos mouse e aperte Enter.")
         layout.addWidget(self.messagem)
 
+        self.ceos_label_layout = QHBoxLayout()
+        self.Ceos = QLabel("C.E.O.S - 0.7.1b LC-transporte")
+        self.Ceos.setStyleSheet("color: gray;") 
+        self.ceos_label_layout.addWidget(self.Ceos)
+        self.ceos_label_layout.setAlignment(Qt.AlignRight)
+        layout.addLayout(self.ceos_label_layout)
+        
         self.setLayout(layout)
+        
+        self.tempo_entregador_spinbox.setValue(1)
+        self.tempo_base_spinbox.setValue(2)
+        self.tempo2_spinbox.setValue(700)
+        self.tempo1_spinbox.setValue(150)
 
         self.positions = {}
         self.counter = 0
@@ -172,8 +209,10 @@ class MouseCoordinateApp(QWidget):
 
             tempo1 = self.tempo1_spinbox.value() / 1000
             tempo2 = self.tempo2_spinbox.value() / 1000
+            tempo_entregador = self.tempo_entregador_spinbox.value()
+            tempo_base = self.tempo_base_spinbox.value() 
 
-            inserir_codigo(codigo_barras, *self.positions['pos1'], *self.positions['pos2'], tempo1, tempo2)
+            inserir_codigo(codigo_barras, *self.positions['pos1'], *self.positions['pos2'], tempo1, tempo2, tempo_entregador, tempo_base)
             self.entry.clear()
             self.counter += 1
             self.counter_label.setText(f"Contador: {self.counter}")
@@ -190,7 +229,7 @@ class MouseCoordinateApp(QWidget):
 
     def exportar_lista(self):
         options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getSaveFileName(self, "Salvar Lista", "", "PDF Files (*.pdf);;All Files (*)", options=options)
+        file_path, _ = QFileDialog.getSaveFileName(self, "Salvar Lista","Funcionario. "+ self.nome_input.text() + ", entregador. " + self.entregador_input.text(), "PDF Files (*.pdf);;All Files (*)", options=options)
 
         if file_path:
             c = canvas.Canvas(file_path, pagesize=letter)
@@ -212,10 +251,22 @@ class MouseCoordinateApp(QWidget):
 
             c.save()
 
+        
+        self.imprimir_pdf(file_path)
+
+    def imprimir_pdf(self, file_path):
+        printer = QPrinter()
+        print_dialog = QPrintDialog(printer, self)
+
+        if print_dialog.exec_() == QPrintDialog.Accepted:
+            printer.setOutputFormat(QPrinter.PdfFormat)
+            printer.setOutputFileName(file_path)
+           
+            print("O arquivo PDF foi enviado para a impressora.")
         self.counter = 0
         self.counter_label.setText(f"Contador: {self.counter}")
         self.resetar_lista()
-
+            
     def resetar_lista(self):
         self.codigos_inseridos.clear()
         if os.path.exists("codigos_inseridos.txt"):
@@ -223,6 +274,7 @@ class MouseCoordinateApp(QWidget):
         self.update_codigos_list_widget()
         self.counter = 0
         self.counter_label.setText(f"Contador: {self.counter}")
+        self.entregador_input.clear()
 
     def deletar_codigo(self):
         selected_items = self.codigos_list_widget.selectedItems()
@@ -266,22 +318,23 @@ class MouseCoordinateApp(QWidget):
         else:
             self.messagem.setText("Insira um código válido.")
         
-def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2):
+def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2, tempo_entregador, tempo_base):
+    coordenadas_base = [(x, y)] * tempo_base
+    coordenadas_entregador = [(x2, y2)] * tempo_entregador
+    
     coordenadas_abas = {
-        'aba1': {'campo1': (x, y), 'campo2': (x, y)},
-        'aba2': {'campo1': (x2, y2), 'campo2': (x2, y2)}
+        'aba1': {f'campo{i+1}': coord for i, coord in enumerate(coordenadas_base)},
+        'aba2': {f'campo{i+1}': coord for i, coord in enumerate(coordenadas_entregador)}
     }
-
     pyperclip.copy(codigo_barras)
-
     for aba, campos in coordenadas_abas.items():
         for campo, coordenadas in campos.items():
             pyautogui.moveTo(*coordenadas, duration=0)
             pyautogui.click()
             pyautogui.hotkey('ctrl', 'v')
-            time.sleep(tempo1)  
+            time.sleep(tempo1)
             pyautogui.press('enter')
-            time.sleep(tempo1)  
+            time.sleep(tempo1)
         time.sleep(tempo2)
 
 if __name__ == "__main__":
