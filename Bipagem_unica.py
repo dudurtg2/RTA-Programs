@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QListWidget,
     QFileDialog,
+    QComboBox
 )
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
 from PyQt5.QtCore import Qt
@@ -31,7 +32,23 @@ from googleapiclient.http import MediaFileUpload
 import tempfile
 import uuid
 
-
+cidades = [
+    "IPIRA", "BAIXA GRANDE", "MAIRI", "VARZEA DA ROÇA", "MORRO DO CHAPEU", "IRECE",
+    "ITABERABA", "IAÇU", "ITATIM", "CASTRO ALVES", "SANTA TEREZINHA", "SANTO ESTEVÃO",
+    "ANTONIO CARDOSO", "IPECAETA", "SÃO GONÇALO DOS CAMPOS", "CACHOEIRA", "SÃO FELIX",
+    "CONCEIÇÃO DA FEIRA", "AMELIA RODRIGUES", "CONCEIÇÃO DO JACUIPE", "CORAÇÃO DE MARIA",
+    "TEODORO SAMPAIO", "IRARA", "SANTANOPOLIS", "MURITIBA", "SAPEAÇU", "CRUZ DAS ALMAS",
+    "GOVERNADOR MANGABEIRA", "CABACEIRA DO PARAGUAÇU", "CONCEIÇÃO DO ALMEIDA", "SÃO FELIPE",
+    "MARAGOGIPE", "TANQUINHO", "CANDEAL", "ICHU", "SERRINHA", "BIRITINGA", "BARROCAS",
+    "ARACI", "TEOFILANDIA", "SANTA BARBARA", "LAMARÃO", "AGUA FRIA", "CONCEIÇÃO DO COITÉ",
+    "VALENTE", "RETIROLANDIA", "SANTA LUZ", "CANSANÇÃO", "QUEIMADAS", "SÃO DOMINGOS",
+    "RIACHÃO DO JACUIPE", "NOVA FATIMA", "PE DE SERRA", "CIPÓ", "BANZAÊ", "FATIMA",
+    "CICERO DANTAS", "NOVA SOURE", "TUCANO", "RIBEIRA DO AMPARO", "SITIO DO QUINTO",
+    "CORONEL JOÃO SÁ", "HELIOPOLIS", "RIBEIRA DO POMBAL", "ANGUERA", "SERRA PRETA",
+    "RAFAEL JAMBEIRO", "BASE ALAGOINHAS", "BASE JACOBINA", "BASE SANTO ANTONIO DE JESUS", 
+    "FEIRA DE SANTANA"
+]
+cidades_ordenadas = sorted(cidades)
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -52,6 +69,14 @@ class MouseCoordinateApp(QWidget):
         self.entregador_input = QLineEdit()
         self.layout_entregador.addWidget(self.entregador_input)
         layout.addLayout(self.layout_entregador)
+        
+        self.layout_cidade = QHBoxLayout()
+        self.cidade_label = QLabel("Cidade:")
+        self.layout_cidade.addWidget(self.cidade_label)
+        self.combo_box = QComboBox()
+        self.combo_box.addItems(cidades_ordenadas)
+        self.layout_cidade.addWidget(self.combo_box)
+        layout.addLayout(self.layout_cidade)
 
         self.label = QLabel("Clique nos botões para definir a posição do mouse:")
         self.label.setStyleSheet("font-weight: bold;")
@@ -172,7 +197,11 @@ class MouseCoordinateApp(QWidget):
 
         self.codigos_inseridos = self.carregar_codigos_inseridos()
         self.update_codigos_list_widget()
-
+        
+    def on_cidade_selected(self, index):
+        selected_cidade = self.combo_box.currentText()
+        self.selected_label.setText(f"Cidade selecionada: {selected_cidade}")
+        
     def set_position1(self):
         self.messagem.setText("Posicione o mouse e pressione Enter.")
         keyboard.wait("enter")
@@ -272,8 +301,8 @@ class MouseCoordinateApp(QWidget):
             "Salvar Lista",
             "Funcionario. "
             + self.nome_input.text()
-            + ", entregador. "
-            + self.entregador_input.text(),
+            + ", cidade. "
+            + self.combo_box.currentText(),
             "PDF Files (*.pdf);;All Files (*)",
             options=options,
         )
@@ -281,34 +310,36 @@ class MouseCoordinateApp(QWidget):
             c = canvas.Canvas(file_path, pagesize=letter)
             now = datetime.datetime.now()
             formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
-            folder_name = now.strftime("%d-%m-%Y")
+            folder_date = now.strftime("%d-%m-%Y")
+            folder_name = self.entregador_input.text().upper() 
             c.drawString(100, 750, "Hora e Dia: " + formatted_now)
             c.drawString(100, 735, "Funcionario: " + self.nome_input.text())
             c.drawString(100, 720, "Entregador: " + self.entregador_input.text())
             c.drawString(100, 705, self.counter_label.text())
-            c.drawString(100, 690, "Por favor, Confirme as informações")
+            c.drawString(100, 690, "Cidade" + self.combo_box.currentText())
             c.drawString(100, 670, "Codigos inseridos:")
             y = 650
             for codigo in self.codigos_inseridos:
                 if y < 50:
                     c.showPage()
                     y = 750
-
                 c.drawString(100, y, str(codigo))
                 y -= 12
             c.save()
+            
             credentials = service_account.Credentials.from_service_account_file(
                 "service-account-credentials.json",
                 scopes=["https://www.googleapis.com/auth/drive"],
             )
             drive_service = build("drive", "v3", credentials=credentials)
+
             folder_exists = False
             page_token = None
             while True:
                 response = (
                     drive_service.files()
                     .list(
-                        q=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+                        q=f"name='{folder_date}' and mimeType='application/vnd.google-apps.folder' and trashed=false",
                         spaces="drive",
                         fields="nextPageToken, files(id, name)",
                         pageToken=page_token,
@@ -316,17 +347,17 @@ class MouseCoordinateApp(QWidget):
                     .execute()
                 )
                 for file in response.get("files", []):
-
-                    if file.get("name") == folder_name:
+                    if file.get("name") == folder_date:
                         folder_id = file.get("id")
                         folder_exists = True
                         break
                 page_token = response.get("nextPageToken", None)
                 if page_token is None:
                     break
+                
             if not folder_exists:
                 folder_metadata = {
-                    "name": folder_name,
+                    "name": folder_date,
                     "mimeType": "application/vnd.google-apps.folder",
                     "parents": ["15K7K7onfz98E2UV31sFHWIQf7RGWhApV"],
                 }
@@ -336,10 +367,46 @@ class MouseCoordinateApp(QWidget):
                     .execute()
                 )
                 folder_id = folder.get("id")
+            
+            subfolder_exists = False
+            page_token = None
+            while True:
+                response = (
+                    drive_service.files()
+                    .list(
+                        q=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false and '{folder_id}' in parents",
+                        spaces="drive",
+                        fields="nextPageToken, files(id, name)",
+                        pageToken=page_token,
+                    )
+                    .execute()
+                )
+                for file in response.get("files", []):
+                    if file.get("name") == folder_name:
+                        subfolder_id = file.get("id")
+                        subfolder_exists = True
+                        break
+                page_token = response.get("nextPageToken", None)
+                if page_token is None:
+                    break
+                
+            if not subfolder_exists:
+                subfolder_metadata = {
+                    "name": folder_name,
+                    "mimeType": "application/vnd.google-apps.folder",
+                    "parents": [folder_id],
+                }
+                subfolder = (
+                    drive_service.files()
+                    .create(body=subfolder_metadata, fields="id")
+                    .execute()
+                )
+                subfolder_id = subfolder.get("id")
+            
             file_metadata = {
                 "name": os.path.basename(file_path),
                 "mimeType": "application/pdf",
-                "parents": [folder_id],
+                "parents": [subfolder_id],
             }
             media = MediaFileUpload(file_path, mimetype="application/pdf")
             file = (
@@ -347,9 +414,9 @@ class MouseCoordinateApp(QWidget):
                 .create(body=file_metadata, media_body=media, fields="id")
                 .execute()
             )
-
+    
             c = None
-
+    
             self.resetar_lista()
 
     def resetar_lista(self):
@@ -357,8 +424,6 @@ class MouseCoordinateApp(QWidget):
         if os.path.exists("codigos_inseridos.txt"):
             os.remove("codigos_inseridos.txt")
         self.update_codigos_list_widget()
-
-        self.entregador_input.clear()
 
     def deletar_codigo(self):
         selected_items = self.codigos_list_widget.selectedItems()
