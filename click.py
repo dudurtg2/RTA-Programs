@@ -65,7 +65,6 @@ class ClickApp:
         except ValueError:
             self.status_label.config(text="Por favor, defina todos os pontos corretamente.")
 
-
 root = tk.Tk()
 app = ClickApp(root)
 
