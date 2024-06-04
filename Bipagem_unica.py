@@ -150,7 +150,7 @@ class MouseCoordinateApp(QWidget):
         layout.addWidget(self.messagem)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("C.E.O.S - 0.7.1beta LC-transporte")
+        self.Ceos = QLabel("C.E.O.S - 0.8.3beta LC-transporte")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
