@@ -1,6 +1,6 @@
 import datetime
 import sys
-import tempfile
+import json
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -28,9 +28,13 @@ from reportlab.pdfgen import canvas
 from PyQt5.QtWidgets import QFileDialog
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+from reportlab.lib.utils import ImageReader
 from googleapiclient.http import MediaFileUpload
-import tempfile
-import uuid
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+import qrcode
+import io
+import pymysql
 
 cidades = [
     "IPIRA", "BAIXA GRANDE", "MAIRI", "VARZEA DA ROÇA", "MORRO DO CHAPEU", "IRECE",
@@ -45,8 +49,9 @@ cidades = [
     "RIACHÃO DO JACUIPE", "NOVA FATIMA", "PE DE SERRA", "CIPÓ", "BANZAÊ", "FATIMA",
     "CICERO DANTAS", "NOVA SOURE", "TUCANO", "RIBEIRA DO AMPARO", "SITIO DO QUINTO",
     "CORONEL JOÃO SÁ", "HELIOPOLIS", "RIBEIRA DO POMBAL", "ANGUERA", "SERRA PRETA",
-    "RAFAEL JAMBEIRO", "BASE ALAGOINHAS", "BASE JACOBINA", "BASE SANTO ANTONIO DE JESUS", 
-    "FEIRA DE SANTANA"
+    "RAFAEL JAMBEIRO", "ALAGOINHAS", "JACOBINA", "SANTO ANTONIO DE JESUS", 
+    "FEIRA DE SANTANA", "CIDADES DE ALAGOINHAS", "CIDADES DE SANTO ANTONIO DE JESUS",
+    "CIDADES DE JACOBINA"
 ]
 cidades_ordenadas = sorted(cidades)
 class MouseCoordinateApp(QWidget):
@@ -119,13 +124,13 @@ class MouseCoordinateApp(QWidget):
         self.label_tempo_base = QLabel("Bipagem na base:")
         tempo_layout_base.addWidget(self.label_tempo_base)
         self.tempo_base_spinbox = QSpinBox()
-        self.tempo_base_spinbox.setRange(1, 5)
+        self.tempo_base_spinbox.setRange(0, 5)
         tempo_layout_base.addWidget(self.tempo_base_spinbox)
 
         self.label_tempo_entregador = QLabel("Bipagem no entregador:")
         tempo_layout_base.addWidget(self.label_tempo_entregador)
         self.tempo_entregador_spinbox = QSpinBox()
-        self.tempo_entregador_spinbox.setRange(1, 5)
+        self.tempo_entregador_spinbox.setRange(0, 5)
         tempo_layout_base.addWidget(self.tempo_entregador_spinbox)
 
         self.label = QLabel("Clique no campo abaixo para inserir os códigos:")
@@ -175,7 +180,7 @@ class MouseCoordinateApp(QWidget):
         layout.addWidget(self.messagem)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("C.E.O.S - 0.9.7beta LC-transporte")
+        self.Ceos = QLabel("C.E.O.S - 0.10.9Beta LC-transporte")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -185,7 +190,7 @@ class MouseCoordinateApp(QWidget):
 
         self.tempo_entregador_spinbox.setValue(1)
         self.tempo_base_spinbox.setValue(2)
-        self.tempo2_spinbox.setValue(700)
+        self.tempo2_spinbox.setValue(800)
         self.tempo1_spinbox.setValue(150)
 
         self.positions = {}
@@ -295,129 +300,141 @@ class MouseCoordinateApp(QWidget):
             window.activate()
 
     def exportar_lista(self):
-        options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Salvar Lista",
-            "Funcionario. "
-            + self.nome_input.text()
-            + ", cidade. "
-            + self.combo_box.currentText(),
-            "PDF Files (*.pdf);;All Files (*)",
-            options=options,
-        )
-        if file_path:
-            c = canvas.Canvas(file_path, pagesize=letter)
+        if (
+            "pos1" in self.positions
+            and "pos2" in self.positions
+            and self.nome_input.text() != ""
+            and self.entregador_input.text() != ""
+        ):
+            options = QFileDialog.Options()
             now = datetime.datetime.now()
-            formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
-            folder_date = now.strftime("%d-%m-%Y")
-            folder_name = self.entregador_input.text().upper() 
-            c.drawString(100, 750, "Hora e Dia: " + formatted_now)
-            c.drawString(100, 735, "Funcionario: " + self.nome_input.text())
-            c.drawString(100, 720, "Entregador: " + self.entregador_input.text())
-            c.drawString(100, 705, self.counter_label.text())
-            c.drawString(100, 690, "Cidade" + self.combo_box.currentText())
-            c.drawString(100, 670, "Codigos inseridos:")
-            y = 650
-            for codigo in self.codigos_inseridos:
-                if y < 50:
-                    c.showPage()
-                    y = 750
-                c.drawString(100, y, str(codigo))
-                y -= 12
-            c.save()
-            
-            credentials = service_account.Credentials.from_service_account_file(
-                "service-account-credentials.json",
-                scopes=["https://www.googleapis.com/auth/drive"],
+            formatted_code = now.strftime("RTA%Y%m%d%H%M%S%f")[:-3] + "LC"
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Salvar Lista",
+                formatted_code + ", cidade. " + self.combo_box.currentText(),
+                "PDF Files (*.pdf);;All Files (*)",
+                options=options,
             )
-            drive_service = build("drive", "v3", credentials=credentials)
+            if file_path:
+                c = canvas.Canvas(file_path, pagesize=letter)
+                now = datetime.datetime.now()
+                formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
+                folder_date = now.strftime("%d-%m-%Y")
+                folder_name = self.entregador_input.text().upper()
+                folder_first = self.nome_input.text().upper()
+                c.drawString(70, 750, "Hora e Dia: " + formatted_now)
+                c.drawString(70, 735, "Funcionario: " + self.nome_input.text())
+                c.drawString(70, 720, "Entregador: " + self.entregador_input.text())
+                c.drawString(70, 705, self.counter_label.text())
+                c.drawString(70, 690, "Cidade: " + self.combo_box.currentText())
+                c.drawString(70, 675, "Codigo de ficha: " + formatted_code)
+                c.drawString(70, 655, "Codigos inseridos:")
+                y = 635
+                for codigo in self.codigos_inseridos:
+                    if y < 50:
+                        c.showPage()
+                        y = 750
+                    c.drawString(70, y, str(codigo))
+                    y -= 12
+                qr_data = formatted_code
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=25,
+                    border=1,
+                )
+                qr.add_data(qr_data)
+                qr.make(fit=True)
+                img = qr.make_image(fill='black', back_color='white')
 
-            folder_exists = False
-            page_token = None
-            while True:
-                response = (
-                    drive_service.files()
-                    .list(
-                        q=f"name='{folder_date}' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+                qr_buffer = io.BytesIO()
+                img.save(qr_buffer, format='PNG')
+                qr_buffer.seek(0)
+
+                c.drawImage(ImageReader(qr_buffer), 400, 665, 100, 100) 
+
+                c.save()
+                with open('service-account-credentials.json') as json_file:
+                    data = json.load(json_file)
+                    service_account_info = data['google_service_account']
+                    mysql_info = data['mysql']
+
+               ##  MYSQL CONNECTION ##
+               ##   try:
+               ##       timeout = 10
+               ##       conn = pymysql.connect(
+               ##           charset=mysql_info["charset"],
+               ##           connect_timeout=mysql_info.get("connect_timeout", 10),
+               ##           cursorclass=pymysql.cursors.DictCursor,
+               ##           db=mysql_info["db"],
+               ##           host=mysql_info["host"],
+               ##           password=mysql_info["password"],
+               ##           read_timeout=mysql_info.get("read_timeout", 10),
+               ##           port=mysql_info["port"],
+               ##           user=mysql_info["user"],
+               ##           write_timeout=mysql_info.get("write_timeout", 10)
+               ##       )
+               ##       cursor = conn.cursor()
+               ##       insert_query = "INSERT INTO your_table (id, codigos_inseridos, formatted_code) VALUES (%s, %s, %s)"
+               ##       for codigo in self.codigos_inseridos:
+               ##           cursor.execute(insert_query, (None, codigo, formatted_code))  
+               ##       conn.commit()      
+               ##   except pymysql.MySQLError as err:
+               ##       print(f"Error: {err}")
+               ##   finally:
+               ##       if conn is not None and conn.open:
+               ##           cursor.close()
+               ##           conn.close()
+
+                credentials = service_account.Credentials.from_service_account_info(
+                    service_account_info,
+                    scopes=["https://www.googleapis.com/auth/drive"]
+                )
+                drive_service = build("drive", "v3", credentials=credentials)
+
+                def find_or_create_folder(folder_name, parent_id=None):
+                    query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
+                    if parent_id:
+                        query += f" and '{parent_id}' in parents"
+                    response = drive_service.files().list(
+                        q=query,
                         spaces="drive",
-                        fields="nextPageToken, files(id, name)",
-                        pageToken=page_token,
-                    )
-                    .execute()
-                )
-                for file in response.get("files", []):
-                    if file.get("name") == folder_date:
-                        folder_id = file.get("id")
-                        folder_exists = True
-                        break
-                page_token = response.get("nextPageToken", None)
-                if page_token is None:
-                    break
-                
-            if not folder_exists:
-                folder_metadata = {
-                    "name": folder_date,
-                    "mimeType": "application/vnd.google-apps.folder",
-                    "parents": ["15K7K7onfz98E2UV31sFHWIQf7RGWhApV"],
+                        fields="files(id, name)",
+                    ).execute()
+                    files = response.get("files", [])
+                    if files:
+                        return files[0]["id"]
+                    else:
+                        folder_metadata = {
+                            "name": folder_name,
+                            "mimeType": "application/vnd.google-apps.folder",
+                        }
+                        if parent_id:
+                            folder_metadata["parents"] = [parent_id]
+                        folder = drive_service.files().create(body=folder_metadata, fields="id").execute()
+                        return folder["id"]
+
+
+                main_folder_id = find_or_create_folder(folder_date, "15K7K7onfz98E2UV31sFHWIQf7RGWhApV")
+
+
+                first_subfolder_id = find_or_create_folder(folder_first, main_folder_id)
+                second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
+
+                file_metadata = {
+                    "name": os.path.basename(file_path),
+                    "mimeType": "application/pdf",
+                    "parents": [second_subfolder_id],
                 }
-                folder = (
-                    drive_service.files()
-                    .create(body=folder_metadata, fields="id")
-                    .execute()
-                )
-                folder_id = folder.get("id")
-            
-            subfolder_exists = False
-            page_token = None
-            while True:
-                response = (
-                    drive_service.files()
-                    .list(
-                        q=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false and '{folder_id}' in parents",
-                        spaces="drive",
-                        fields="nextPageToken, files(id, name)",
-                        pageToken=page_token,
-                    )
-                    .execute()
-                )
-                for file in response.get("files", []):
-                    if file.get("name") == folder_name:
-                        subfolder_id = file.get("id")
-                        subfolder_exists = True
-                        break
-                page_token = response.get("nextPageToken", None)
-                if page_token is None:
-                    break
-                
-            if not subfolder_exists:
-                subfolder_metadata = {
-                    "name": folder_name,
-                    "mimeType": "application/vnd.google-apps.folder",
-                    "parents": [folder_id],
-                }
-                subfolder = (
-                    drive_service.files()
-                    .create(body=subfolder_metadata, fields="id")
-                    .execute()
-                )
-                subfolder_id = subfolder.get("id")
-            
-            file_metadata = {
-                "name": os.path.basename(file_path),
-                "mimeType": "application/pdf",
-                "parents": [subfolder_id],
-            }
-            media = MediaFileUpload(file_path, mimetype="application/pdf")
-            file = (
-                drive_service.files()
-                .create(body=file_metadata, media_body=media, fields="id")
-                .execute()
+                media = MediaFileUpload(file_path, mimetype="application/pdf")
+                drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+
+                self.resetar_lista()
+        else:    
+            self.messagem.setText(
+                "Por favor, defina todas as posições, nome e entregador\nantes de exporta."
             )
-    
-            c = None
-    
-            self.resetar_lista()
 
     def resetar_lista(self):
         self.codigos_inseridos.clear()
@@ -436,6 +453,7 @@ class MouseCoordinateApp(QWidget):
             self.counter -= 1
             self.counter_label.setText(f"Contador: {self.counter}")
         self.salvar_codigos_inseridos()
+        self.search_input.clear()
 
     def salvar_codigos_inseridos(self):
         with open("codigos_inseridos.txt", "w") as file:
