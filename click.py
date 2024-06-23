@@ -69,3 +69,29 @@ root = tk.Tk()
 app = ClickApp(root)
 
 root.mainloop()
+ ##  MYSQL CONNECTION ##
+                ##   try:
+                ##       timeout = 10
+                ##       conn = pymysql.connect(
+                ##           charset=mysql_info["charset"],
+                ##           connect_timeout=mysql_info.get("connect_timeout", 10),
+                ##           cursorclass=pymysql.cursors.DictCursor,
+                ##           db=mysql_info["db"],
+                ##           host=mysql_info["host"],
+                ##           password=mysql_info["password"],
+                ##           read_timeout=mysql_info.get("read_timeout", 10),
+                ##           port=mysql_info["port"],
+                ##           user=mysql_info["user"],
+                ##           write_timeout=mysql_info.get("write_timeout", 10)
+                ##       )
+                ##       cursor = conn.cursor()
+                ##       insert_query = "INSERT INTO your_table (id, codigos_inseridos, formatted_code) VALUES (%s, %s, %s)"
+                ##       for codigo in self.codigos_inseridos:
+                ##           cursor.execute(insert_query, (None, codigo, formatted_code))  
+                ##       conn.commit()      
+                ##   except pymysql.MySQLError as err:
+                ##       print(f"Error: {err}")
+                ##   finally:
+                ##       if conn is not None and conn open:
+                ##           cursor.close()
+                ##           conn.close()
