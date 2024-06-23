@@ -184,9 +184,18 @@ class MouseCoordinateApp(QWidget):
 
         self.messagem = QLabel("Defina as posicoes dos mouse e aperte Enter.")
         layout.addWidget(self.messagem)
+        
+        sound_layout = QHBoxLayout()
+        layout.addLayout(sound_layout)
+        
+        self.sound_text = QLabel("Perfil de som:")
+        sound_layout.addWidget(self.sound_text)
+        self.sound_imput = QSpinBox()
+        self.sound_imput.setRange(0, 8000)
+        sound_layout.addWidget(self.sound_imput)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("C.E.O.S - 0.10.9Beta LC-transporte")
+        self.Ceos = QLabel("C.E.O.S - 0.11.1Beta LC-transporte")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -198,6 +207,7 @@ class MouseCoordinateApp(QWidget):
         self.tempo_base_spinbox.setValue(2)
         self.tempo2_spinbox.setValue(800)
         self.tempo1_spinbox.setValue(150)
+        self.sound_imput.setValue(3520)
 
         self.positions = {}
         self.counter = 0
@@ -252,6 +262,9 @@ class MouseCoordinateApp(QWidget):
             self.counter = 0
         self.counter_label.setText(f"Contador: {self.counter}")
 
+    def sound_success(self):
+        winsound.Beep(int(self.sound_imput.value()) , 250)
+        
     def start_inserir_codigo(self):
         if (
             "pos1" in self.positions
@@ -291,15 +304,14 @@ class MouseCoordinateApp(QWidget):
                 tempo_base,
             )
             self.entry.clear()
-
+            self.sound_success()
             self.bring_to_front()
-            winsound.Beep(3520, 250)
+            
             self.update_codigos_list_widget()
         else:
             self.messagem.setText(
                 "Por favor, defina todas as posições, nome e entregador\nantes de iniciar."
             )
-
     def bring_to_front(self):
         window = gw.getWindowsWithTitle(self.windowTitle())[0]
         if window:
