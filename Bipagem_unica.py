@@ -1,6 +1,28 @@
 import datetime
 import sys
 import json
+import pyautogui
+import pyperclip
+import time
+import winsound
+import keyboard
+import os
+import qrcode
+import io
+import pymysql
+import subprocess
+
+import pygetwindow as gw
+
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QFileDialog
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
+from googleapiclient.http import MediaFileUpload
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -14,27 +36,11 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QComboBox
 )
-from PyQt5.QtPrintSupport import QPrinter, QPrintDialog
-from PyQt5.QtCore import Qt
-import pyautogui
-import pyperclip
-import time
-import pygetwindow as gw
-import winsound
-import keyboard
-import os
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from PyQt5.QtWidgets import QFileDialog
-from googleapiclient.discovery import build
-from google.oauth2 import service_account
-from reportlab.lib.utils import ImageReader
-from googleapiclient.http import MediaFileUpload
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-import qrcode
-import io
-import pymysql
+from PyQt5.QtPrintSupport import (
+    QPrinter,
+    QPrintDialog
+)
+
 
 cidades = [
     "IPIRA", "BAIXA GRANDE", "MAIRI", "VARZEA DA ROÇA", "MORRO DO CHAPEU", "IRECE",
@@ -51,7 +57,7 @@ cidades = [
     "CORONEL JOÃO SÁ", "HELIOPOLIS", "RIBEIRA DO POMBAL", "ANGUERA", "SERRA PRETA",
     "RAFAEL JAMBEIRO", "ALAGOINHAS", "JACOBINA", "SANTO ANTONIO DE JESUS", 
     "FEIRA DE SANTANA", "CIDADES DE ALAGOINHAS", "CIDADES DE SANTO ANTONIO DE JESUS",
-    "CIDADES DE JACOBINA"
+    "CIDADES DE JACOBINA", "DEVOLUÇÃO"
 ]
 cidades_ordenadas = sorted(cidades)
 class MouseCoordinateApp(QWidget):
@@ -298,7 +304,7 @@ class MouseCoordinateApp(QWidget):
         window = gw.getWindowsWithTitle(self.windowTitle())[0]
         if window:
             window.activate()
-
+   
     def exportar_lista(self):
         if (
             "pos1" in self.positions
@@ -347,52 +353,26 @@ class MouseCoordinateApp(QWidget):
                 qr.add_data(qr_data)
                 qr.make(fit=True)
                 img = qr.make_image(fill='black', back_color='white')
-
+    
                 qr_buffer = io.BytesIO()
                 img.save(qr_buffer, format='PNG')
                 qr_buffer.seek(0)
-
+    
                 c.drawImage(ImageReader(qr_buffer), 400, 665, 100, 100) 
-
+    
                 c.save()
                 with open('service-account-credentials.json') as json_file:
                     data = json.load(json_file)
                     service_account_info = data['google_service_account']
                     mysql_info = data['mysql']
-
-               ##  MYSQL CONNECTION ##
-               ##   try:
-               ##       timeout = 10
-               ##       conn = pymysql.connect(
-               ##           charset=mysql_info["charset"],
-               ##           connect_timeout=mysql_info.get("connect_timeout", 10),
-               ##           cursorclass=pymysql.cursors.DictCursor,
-               ##           db=mysql_info["db"],
-               ##           host=mysql_info["host"],
-               ##           password=mysql_info["password"],
-               ##           read_timeout=mysql_info.get("read_timeout", 10),
-               ##           port=mysql_info["port"],
-               ##           user=mysql_info["user"],
-               ##           write_timeout=mysql_info.get("write_timeout", 10)
-               ##       )
-               ##       cursor = conn.cursor()
-               ##       insert_query = "INSERT INTO your_table (id, codigos_inseridos, formatted_code) VALUES (%s, %s, %s)"
-               ##       for codigo in self.codigos_inseridos:
-               ##           cursor.execute(insert_query, (None, codigo, formatted_code))  
-               ##       conn.commit()      
-               ##   except pymysql.MySQLError as err:
-               ##       print(f"Error: {err}")
-               ##   finally:
-               ##       if conn is not None and conn.open:
-               ##           cursor.close()
-               ##           conn.close()
-
+    
+    
                 credentials = service_account.Credentials.from_service_account_info(
                     service_account_info,
                     scopes=["https://www.googleapis.com/auth/drive"]
                 )
                 drive_service = build("drive", "v3", credentials=credentials)
-
+    
                 def find_or_create_folder(folder_name, parent_id=None):
                     query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
                     if parent_id:
@@ -414,14 +394,14 @@ class MouseCoordinateApp(QWidget):
                             folder_metadata["parents"] = [parent_id]
                         folder = drive_service.files().create(body=folder_metadata, fields="id").execute()
                         return folder["id"]
-
-
+    
+    
                 main_folder_id = find_or_create_folder(folder_date, "15K7K7onfz98E2UV31sFHWIQf7RGWhApV")
-
-
+    
+    
                 first_subfolder_id = find_or_create_folder(folder_first, main_folder_id)
                 second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
-
+    
                 file_metadata = {
                     "name": os.path.basename(file_path),
                     "mimeType": "application/pdf",
@@ -429,13 +409,13 @@ class MouseCoordinateApp(QWidget):
                 }
                 media = MediaFileUpload(file_path, mimetype="application/pdf")
                 drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
-
+                
                 self.resetar_lista()
         else:    
             self.messagem.setText(
-                "Por favor, defina todas as posições, nome e entregador\nantes de exporta."
+                "Por favor, defina todas as posições, nome e entregador\nantes de exportar."
             )
-
+    
     def resetar_lista(self):
         self.codigos_inseridos.clear()
         if os.path.exists("codigos_inseridos.txt"):
