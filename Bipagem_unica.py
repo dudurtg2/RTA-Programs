@@ -41,7 +41,6 @@ from PyQt5.QtPrintSupport import (
     QPrintDialog
 )
 
-
 cidades = [
     "IPIRA", "BAIXA GRANDE", "MAIRI", "VARZEA DA ROÇA", "MORRO DO CHAPEU", "IRECE",
     "ITABERABA", "IAÇU", "ITATIM", "CASTRO ALVES", "SANTA TEREZINHA", "SANTO ESTEVÃO",
@@ -195,27 +194,22 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_imput)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("C.E.O.S - 0.11.1Beta LC-transporte")
+        self.Ceos = QLabel("C.E.O.S - 0.11.2Beta LC-transporte")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
         layout.addLayout(self.ceos_label_layout)
 
         self.setLayout(layout)
-
         self.tempo_entregador_spinbox.setValue(1)
         self.tempo_base_spinbox.setValue(2)
         self.tempo2_spinbox.setValue(800)
         self.tempo1_spinbox.setValue(150)
         self.sound_imput.setValue(3520)
-
         self.positions = {}
         self.counter = 0
-
         self.adicionar_codigo_input.returnPressed.connect(self.adicionar_codigo)
-
         self.entry.returnPressed.connect(self.start_inserir_codigo)
-
         self.codigos_inseridos = self.carregar_codigos_inseridos()
         self.update_codigos_list_widget()
         
@@ -243,42 +237,30 @@ class MouseCoordinateApp(QWidget):
             with open("codigos_inseridos.txt", "r") as file:
                 for linha in file:
                     linha = linha.strip()
-                    if linha:
-                        codigos_inseridos.add(linha)
+                    if linha: codigos_inseridos.add(linha)
         return codigos_inseridos
 
     def salvar_codigo(self, codigo):
         with open("codigos_inseridos.txt", "a") as file:
-            if not file.tell():
-                file.write("\n")
+            if not file.tell(): file.write("\n")
             file.write(f"{codigo}\n")
 
     def update_codigos_list_widget(self):
         self.codigos_list_widget.clear()
         self.codigos_list_widget.addItems(self.codigos_inseridos)
-        if self.codigos_inseridos:
-            self.counter = len(self.codigos_inseridos)
-        else:
-            self.counter = 0
+        if self.codigos_inseridos: self.counter = len(self.codigos_inseridos)
+        else: self.counter = 0
         self.counter_label.setText(f"Contador: {self.counter}")
 
-    def sound_success(self):
-        winsound.Beep(int(self.sound_imput.value()) , 250)
+    def sound_success(self): winsound.Beep(int(self.sound_imput.value()) , 250)
         
     def start_inserir_codigo(self):
-        if (
-            "pos1" in self.positions
-            and "pos2" in self.positions
-            and self.nome_input.text() != ""
-            and self.entregador_input.text() != ""
-        ):
+        if ( "pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != "" ):
             codigo_barras = self.entry.text()
             if len(codigo_barras) < 1:
-                self.messagem.setText(
-                    "Código de barras inválido. \nInsira um código com pelo menos 1 caractere."
-                )
+                self.messagem.setText( "Código de barras inválido. \nInsira um código com pelo menos 1 caractere." )
                 return
-
+            
             if codigo_barras in self.codigos_inseridos:
                 self.entry.clear()
                 self.bring_to_front()
@@ -288,45 +270,25 @@ class MouseCoordinateApp(QWidget):
 
             self.codigos_inseridos.add(codigo_barras)
             self.salvar_codigo(codigo_barras)
-
-            tempo1 = self.tempo1_spinbox.value() / 1000
-            tempo2 = self.tempo2_spinbox.value() / 1000
-            tempo_entregador = self.tempo_entregador_spinbox.value()
-            tempo_base = self.tempo_base_spinbox.value()
-
-            inserir_codigo(
-                codigo_barras,
-                *self.positions["pos1"],
-                *self.positions["pos2"],
-                tempo1,
-                tempo2,
-                tempo_entregador,
-                tempo_base,
-            )
+            
+            inserir_codigo(codigo_barras, *self.positions["pos1"], *self.positions["pos2"], self.tempo1_spinbox.value() / 1000, self.tempo2_spinbox.value() / 1000, self.tempo_entregador_spinbox.value(), self.tempo_base_spinbox.value())
+            
             self.entry.clear()
             self.sound_success()
             self.bring_to_front()
+            self.update_codigos_list_widget() 
+        else: self.messagem.setText( "Por favor, defina todas as posições, nome e entregador\nantes de iniciar." )
             
-            self.update_codigos_list_widget()
-        else:
-            self.messagem.setText(
-                "Por favor, defina todas as posições, nome e entregador\nantes de iniciar."
-            )
     def bring_to_front(self):
         window = gw.getWindowsWithTitle(self.windowTitle())[0]
-        if window:
-            window.activate()
-   
+        if window: window.activate()
+            
     def exportar_lista(self):
-        if (
-            "pos1" in self.positions
-            and "pos2" in self.positions
-            and self.nome_input.text() != ""
-            and self.entregador_input.text() != ""
-        ):
+        if ("pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != ""):
             options = QFileDialog.Options()
             now = datetime.datetime.now()
             formatted_code = now.strftime("RTA%Y%m%d%H%M%S%f")[:-3] + "LC"
+            
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
                 "Salvar Lista",
@@ -334,6 +296,7 @@ class MouseCoordinateApp(QWidget):
                 "PDF Files (*.pdf);;All Files (*)",
                 options=options,
             )
+            
             if file_path:
                 c = canvas.Canvas(file_path, pagesize=letter)
                 now = datetime.datetime.now()
@@ -341,6 +304,7 @@ class MouseCoordinateApp(QWidget):
                 folder_date = now.strftime("%d-%m-%Y")
                 folder_name = self.entregador_input.text().upper()
                 folder_first = self.nome_input.text().upper()
+                
                 c.drawString(70, 750, "Hora e Dia: " + formatted_now)
                 c.drawString(70, 735, "Funcionario: " + self.nome_input.text())
                 c.drawString(70, 720, "Entregador: " + self.entregador_input.text())
@@ -348,6 +312,7 @@ class MouseCoordinateApp(QWidget):
                 c.drawString(70, 690, "Cidade: " + self.combo_box.currentText())
                 c.drawString(70, 675, "Codigo de ficha: " + formatted_code)
                 c.drawString(70, 655, "Codigos inseridos:")
+                
                 y = 635
                 for codigo in self.codigos_inseridos:
                     if y < 50:
@@ -356,7 +321,7 @@ class MouseCoordinateApp(QWidget):
                     c.drawString(70, y, str(codigo))
                     y -= 12
                 qr_data = formatted_code
-                qr = qrcode.QRCode(
+                qr = qrcode.QRCode( 
                     version=1,
                     error_correction=qrcode.constants.ERROR_CORRECT_L,
                     box_size=25,
@@ -369,48 +334,33 @@ class MouseCoordinateApp(QWidget):
                 qr_buffer = io.BytesIO()
                 img.save(qr_buffer, format='PNG')
                 qr_buffer.seek(0)
-    
+                
                 c.drawImage(ImageReader(qr_buffer), 400, 665, 100, 100) 
-    
                 c.save()
-                with open('service-account-credentials.json') as json_file:
-                    data = json.load(json_file)
-                    service_account_info = data['google_service_account']
-                    mysql_info = data['mysql']
-    
-    
-                credentials = service_account.Credentials.from_service_account_info(
-                    service_account_info,
-                    scopes=["https://www.googleapis.com/auth/drive"]
-                )
+                    
+                credentials = service_account.Credentials.from_service_account_info(service_account_info, scopes=["https://www.googleapis.com/auth/drive"])
                 drive_service = build("drive", "v3", credentials=credentials)
     
                 def find_or_create_folder(folder_name, parent_id=None):
                     query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
-                    if parent_id:
-                        query += f" and '{parent_id}' in parents"
+                    if parent_id: query += f" and '{parent_id}' in parents"
                     response = drive_service.files().list(
                         q=query,
                         spaces="drive",
                         fields="files(id, name)",
                     ).execute()
                     files = response.get("files", [])
-                    if files:
-                        return files[0]["id"]
+                    if files: return files[0]["id"]
                     else:
                         folder_metadata = {
                             "name": folder_name,
                             "mimeType": "application/vnd.google-apps.folder",
                         }
-                        if parent_id:
-                            folder_metadata["parents"] = [parent_id]
+                        if parent_id: folder_metadata["parents"] = [parent_id]
                         folder = drive_service.files().create(body=folder_metadata, fields="id").execute()
                         return folder["id"]
-    
-    
+                    
                 main_folder_id = find_or_create_folder(folder_date, "15K7K7onfz98E2UV31sFHWIQf7RGWhApV")
-    
-    
                 first_subfolder_id = find_or_create_folder(folder_first, main_folder_id)
                 second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
     
@@ -423,21 +373,16 @@ class MouseCoordinateApp(QWidget):
                 drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
                 
                 self.resetar_lista()
-        else:    
-            self.messagem.setText(
-                "Por favor, defina todas as posições, nome e entregador\nantes de exportar."
-            )
+        else: self.messagem.setText("Por favor, defina todas as posições, nome e entregador\nantes de exportar.")
     
     def resetar_lista(self):
         self.codigos_inseridos.clear()
-        if os.path.exists("codigos_inseridos.txt"):
-            os.remove("codigos_inseridos.txt")
+        if os.path.exists("codigos_inseridos.txt"): os.remove("codigos_inseridos.txt")
         self.update_codigos_list_widget()
 
     def deletar_codigo(self):
         selected_items = self.codigos_list_widget.selectedItems()
-        if not selected_items:
-            return
+        if not selected_items: return
         for item in selected_items:
             codigo = item.text()
             self.codigos_inseridos.remove(codigo)
@@ -456,8 +401,7 @@ class MouseCoordinateApp(QWidget):
         search_term = self.search_input.text().lower()
         self.codigos_list_widget.clear()
         for codigo in self.codigos_inseridos:
-            if search_term in codigo.lower():
-                self.codigos_list_widget.addItem(codigo)
+            if search_term in codigo.lower(): self.codigos_list_widget.addItem(codigo)
 
     def adicionar_codigo(self):
         codigo_barras = self.adicionar_codigo_input.text()
@@ -472,22 +416,14 @@ class MouseCoordinateApp(QWidget):
             self.salvar_codigo(codigo_barras)
             self.update_codigos_list_widget()
             self.adicionar_codigo_input.clear()
+        else: self.messagem.setText("Insira um código válido.")
 
-        else:
-            self.messagem.setText("Insira um código válido.")
-
-
-def inserir_codigo(
-    codigo_barras, x, y, x2, y2, tempo1, tempo2, tempo_entregador, tempo_base
-):
+def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2, tempo_entregador, tempo_base):
     coordenadas_base = [(x, y)] * tempo_base
     coordenadas_entregador = [(x2, y2)] * tempo_entregador
-
     coordenadas_abas = {
         "aba1": {f"campo{i+1}": coord for i, coord in enumerate(coordenadas_base)},
-        "aba2": {
-            f"campo{i+1}": coord for i, coord in enumerate(coordenadas_entregador)
-        },
+        "aba2": {f"campo{i+1}": coord for i, coord in enumerate(coordenadas_entregador)},
     }
     pyperclip.copy(codigo_barras)
     for aba, campos in coordenadas_abas.items():
@@ -499,7 +435,6 @@ def inserir_codigo(
             pyautogui.press("enter")
             time.sleep(tempo1)
         time.sleep(tempo2)
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
