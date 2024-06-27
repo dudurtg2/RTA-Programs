@@ -11,9 +11,11 @@ import qrcode
 import io
 import pymysql
 import subprocess
+import firebase_admin
 
 import pygetwindow as gw
 
+from firebase_admin import credentials, firestore
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog
 from googleapiclient.discovery import build
@@ -40,8 +42,9 @@ from PyQt5.QtPrintSupport import (
     QPrinter,
     QPrintDialog
 )
+base = [ "FEIRA DE SANTANA","ALAGOINHAS", "JACOBINA", "SANTO ANTONIO DE JESUS", "DEVOLUÇÃO"]
 
-cidades = [
+cidades_feira = [
     "IPIRA", "BAIXA GRANDE", "MAIRI", "VARZEA DA ROÇA", "MORRO DO CHAPEU", "IRECE",
     "ITABERABA", "IAÇU", "ITATIM", "CASTRO ALVES", "SANTA TEREZINHA", "SANTO ESTEVÃO",
     "ANTONIO CARDOSO", "IPECAETA", "SÃO GONÇALO DOS CAMPOS", "CACHOEIRA", "SÃO FELIX",
@@ -54,11 +57,28 @@ cidades = [
     "RIACHÃO DO JACUIPE", "NOVA FATIMA", "PE DE SERRA", "CIPÓ", "BANZAÊ", "FATIMA",
     "CICERO DANTAS", "NOVA SOURE", "TUCANO", "RIBEIRA DO AMPARO", "SITIO DO QUINTO",
     "CORONEL JOÃO SÁ", "HELIOPOLIS", "RIBEIRA DO POMBAL", "ANGUERA", "SERRA PRETA",
-    "RAFAEL JAMBEIRO", "ALAGOINHAS", "JACOBINA", "SANTO ANTONIO DE JESUS", 
-    "FEIRA DE SANTANA", "CIDADES DE ALAGOINHAS", "CIDADES DE SANTO ANTONIO DE JESUS",
-    "CIDADES DE JACOBINA", "DEVOLUÇÃO"
+    "RAFAEL JAMBEIRO", "FEIRA DE SANTANA"
 ]
-cidades_ordenadas = sorted(cidades)
+cidades_algoinhas = [
+    "ALAGOINHAS","ACAJUTIBA","CONDE","CRISÓPOLIS","ENTRE RIOS","ESPLANADA","INHAMBUPE",
+    "ITANAGRA","JANDAÍRA","MATA DE SÃO JOÃO","OURIÇANGAS","RIO REAL","SÁTIRO DIAS",
+    "ARATUÍPE","APORÁ","ARAMARI","ARAÇÁS","CARDEAL DA SILVA","CATU","ITAPICURU",
+    "OLINDINA"
+]
+cidades_saj = [
+    "CONCEIÇÃO DO ALMEIDA","ELÍSIO MEDRADO","ITAPARICA","ITUBERÁ","JIQUIRIÇÁ","LAJE",
+    "MUNIZ FERREIRA","MUTUÍPE","NILO PEÇANHA","SANTO ANTÔNIO DE JESUS","SÃO FELIPE",
+    "SÃO MIGUEL DAS MATAS","UBAÍRA","VALENÇA","VARZEDO","DOM MACEDO COSTA","ITAQUARA",
+    "NAZARÉ","TAPEROÁ","TEOLÂNDIA","IGRAPIÚNA","JAGUARIPE","AMARGOSA","CRAVOLÂNDIA",
+    "GANDU","NOVA IBIÁ","PRESIDENTE TANCREDO NEVES","SALINAS DA MARGARIDA","SANTA INÊS",
+    "VERA CRUZ","WENCESLAU GUIMARÃES"
+]
+cidades_jacobina = [
+    "BAIXA GRANDE","CAÉM","MAIRI","MIGUEL CALMON","SERROLÂNDIA","VÁRZEA DO POÇO",
+    "VÁRZEA NOVA","JACOBINA"
+]
+devolucaos = ["DEVOLUÇÃO PARA LOGGI", "DEVOLUÇÃO PARA FEIRA", "DEVOLUÇÃO PARA JADLOG", "DEVOLUÇÃO PARA SHOPEE", "DEVOLUÇÃO PARA ANJUN", "DEVOLUÇÃO PARA SEQUOIA"]
+
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -78,13 +98,22 @@ class MouseCoordinateApp(QWidget):
         self.layout_entregador.addWidget(self.entregador_label)
         self.entregador_input = QLineEdit()
         self.layout_entregador.addWidget(self.entregador_input)
+        
         layout.addLayout(self.layout_entregador)
+        self.layout_base = QHBoxLayout()
+        self.base_label = QLabel("Região de destino:")
+        self.layout_base.addWidget(self.base_label)
+        self.base_combo_box = QComboBox()
+        self.base_combo_box.addItems(base)
+        self.layout_base.addWidget(self.base_combo_box)
+        layout.addLayout(self.layout_base)
+        self.base_combo_box.currentIndexChanged.connect(self.on_base_selected)
         
         self.layout_cidade = QHBoxLayout()
         self.cidade_label = QLabel("Cidade:")
         self.layout_cidade.addWidget(self.cidade_label)
         self.combo_box = QComboBox()
-        self.combo_box.addItems(cidades_ordenadas)
+        self.combo_box.addItems(sorted(cidades_feira))
         self.layout_cidade.addWidget(self.combo_box)
         layout.addLayout(self.layout_cidade)
 
@@ -216,7 +245,24 @@ class MouseCoordinateApp(QWidget):
     def on_cidade_selected(self, index):
         selected_cidade = self.combo_box.currentText()
         self.selected_label.setText(f"Cidade selecionada: {selected_cidade}")
-        
+    
+    def on_base_selected(self, index):
+        base_selecionada = self.base_combo_box.currentText()
+        if base_selecionada == "ALAGOINHAS":
+            self.atualizar_cidades(sorted(cidades_algoinhas))
+        elif base_selecionada == "JACOBINA":
+            self.atualizar_cidades(sorted(cidades_jacobina)) 
+        elif base_selecionada == "SANTO ANTONIO DE JESUS":
+            self.atualizar_cidades(sorted(cidades_saj))
+        elif base_selecionada == "FEIRA DE SANTANA":
+            self.atualizar_cidades(sorted(cidades_feira)) 
+        elif base_selecionada == "DEVOLUÇÃO":
+            self.atualizar_cidades(sorted(devolucaos)) 
+
+    def atualizar_cidades(self, lista_cidades):
+        self.combo_box.clear()
+        self.combo_box.addItems(lista_cidades)
+            
     def set_position1(self):
         self.messagem.setText("Posicione o mouse e pressione Enter.")
         keyboard.wait("enter")
@@ -288,7 +334,7 @@ class MouseCoordinateApp(QWidget):
             options = QFileDialog.Options()
             now = datetime.datetime.now()
             formatted_code = now.strftime("RTA%Y%m%d%H%M%S%f")[:-3] + "LC"
-            
+
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
                 "Salvar Lista",
@@ -296,7 +342,7 @@ class MouseCoordinateApp(QWidget):
                 "PDF Files (*.pdf);;All Files (*)",
                 options=options,
             )
-            
+
             if file_path:
                 c = canvas.Canvas(file_path, pagesize=letter)
                 now = datetime.datetime.now()
@@ -304,22 +350,16 @@ class MouseCoordinateApp(QWidget):
                 folder_date = now.strftime("%d-%m-%Y")
                 folder_name = self.entregador_input.text().upper()
                 folder_first = self.nome_input.text().upper()
-                
+
                 c.drawString(70, 750, "Hora e Dia: " + formatted_now)
                 c.drawString(70, 735, "Funcionario: " + self.nome_input.text())
                 c.drawString(70, 720, "Entregador: " + self.entregador_input.text())
                 c.drawString(70, 705, self.counter_label.text())
-                c.drawString(70, 690, "Cidade: " + self.combo_box.currentText())
-                c.drawString(70, 675, "Codigo de ficha: " + formatted_code)
-                c.drawString(70, 655, "Codigos inseridos:")
+                c.drawString(70, 690, "Região: " + self.base_combo_box.currentText())
+                c.drawString(70, 675, "Cidade: " + self.combo_box.currentText())
+                c.drawString(70, 660, "Codigo de ficha: " + formatted_code)
+                c.drawString(70, 645, "Codigos inseridos:")
                 
-                y = 635
-                for codigo in self.codigos_inseridos:
-                    if y < 50:
-                        c.showPage()
-                        y = 750
-                    c.drawString(70, y, str(codigo))
-                    y -= 12
                 qr_data = formatted_code
                 qr = qrcode.QRCode( 
                     version=1,
@@ -330,36 +370,59 @@ class MouseCoordinateApp(QWidget):
                 qr.add_data(qr_data)
                 qr.make(fit=True)
                 img = qr.make_image(fill='black', back_color='white')
-    
+
                 qr_buffer = io.BytesIO()
                 img.save(qr_buffer, format='PNG')
                 qr_buffer.seek(0)
-                
+
                 c.drawImage(ImageReader(qr_buffer), 400, 665, 100, 100) 
+                
+                y = 620
+                for codigo in self.codigos_inseridos:
+                    if y < 50:
+                        c.showPage()
+                        y = 750
+                    c.drawString(70, y, str(codigo))
+                    y -= 12
+                
                 c.save()
-                    
-                credentials = service_account.Credentials.from_service_account_info(service_account_info, scopes=["https://www.googleapis.com/auth/drive"])
-                drive_service = build("drive", "v3", credentials=credentials)
+
+                with open('service-account-credentials.json') as json_file:
+                    data = json.load(json_file)
+                    service_account_info = data['google_service_account']
+                    mysql_info = data['mysql']
+                    firebase_credentials = data['firebase']
+
+                cred = credentials.Certificate(firebase_credentials)
+                firebase_admin.initialize_app(cred)
+
+                db = firestore.client()
+
+                credentials_drive = service_account.Credentials.from_service_account_info(service_account_info, scopes=["https://www.googleapis.com/auth/drive"])
+                drive_service = build("drive", "v3", credentials=credentials_drive)
     
                 def find_or_create_folder(folder_name, parent_id=None):
                     query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
-                    if parent_id: query += f" and '{parent_id}' in parents"
+                    if parent_id:
+                        query += f" and '{parent_id}' in parents"
                     response = drive_service.files().list(
                         q=query,
                         spaces="drive",
                         fields="files(id, name)",
                     ).execute()
                     files = response.get("files", [])
-                    if files: return files[0]["id"]
+                    if files:
+                        return files[0]["id"]
                     else:
                         folder_metadata = {
                             "name": folder_name,
                             "mimeType": "application/vnd.google-apps.folder",
                         }
-                        if parent_id: folder_metadata["parents"] = [parent_id]
+                        if parent_id:
+                            folder_metadata["parents"] = [parent_id]
                         folder = drive_service.files().create(body=folder_metadata, fields="id").execute()
                         return folder["id"]
-                    
+
                 main_folder_id = find_or_create_folder(folder_date, "15K7K7onfz98E2UV31sFHWIQf7RGWhApV")
                 first_subfolder_id = find_or_create_folder(folder_first, main_folder_id)
                 second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
@@ -371,9 +434,19 @@ class MouseCoordinateApp(QWidget):
                 }
                 media = MediaFileUpload(file_path, mimetype="application/pdf")
                 drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
-                
+
+                db.collection('bipagem').document(formatted_code).set({
+                    'Funcionario': self.nome_input.text(),
+                    'Entregador': self.entregador_input.text(),
+                    'Cidade': self.combo_box.currentText(),
+                    'Codigo de ficha': formatted_code,
+                    'Codigos inseridos': self.codigos_inseridos,
+                    'Hora e Dia': formatted_now
+                })
+
                 self.resetar_lista()
         else: self.messagem.setText("Por favor, defina todas as posições, nome e entregador\nantes de exportar.")
+
     
     def resetar_lista(self):
         self.codigos_inseridos.clear()

@@ -70,6 +70,10 @@ app = ClickApp(root)
 
 root.mainloop()
  ##  MYSQL CONNECTION ##
+                ##with open('service-account-credentials.json') as json_file:
+                ##   data = json.load(json_file)
+                ##   service_account_info = data['google_service_account']
+                ##   mysql_info = data['mysql']
                 ##   try:
                 ##       timeout = 10
                 ##       conn = pymysql.connect(
@@ -95,3 +99,4 @@ root.mainloop()
                 ##       if conn is not None and conn open:
                 ##           cursor.close()
                 ##           conn.close()
+                
