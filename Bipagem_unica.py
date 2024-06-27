@@ -82,7 +82,7 @@ devolucaos = ["DEVOLUÇÃO PARA LOGGI", "DEVOLUÇÃO PARA FEIRA", "DEVOLUÇÃO P
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Sistema de bipagem unica")
+        self.setWindowTitle("LC-Bipagem RTA")
 
         layout = QVBoxLayout()
 
@@ -223,7 +223,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_imput)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("C.E.O.S - 0.11.2Beta LC-transporte")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.0.1")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
