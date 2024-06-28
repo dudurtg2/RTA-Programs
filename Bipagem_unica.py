@@ -5,12 +5,9 @@ import pyautogui
 import pyperclip
 import time
 import winsound
-import keyboard
 import os
 import qrcode
 import io
-import pymysql
-import threading
 import firebase_admin
 
 import pygetwindow as gw
@@ -37,10 +34,6 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QFileDialog,
     QComboBox
-)
-from PyQt5.QtPrintSupport import (
-    QPrinter,
-    QPrintDialog
 )
 
 empresa = [
@@ -210,7 +203,7 @@ class MouseCoordinateApp(QWidget):
         self.entry = QLineEdit()
         layout.addWidget(self.entry)
 
-        self.counter_label = QLabel("Contador: 0")
+        self.counter_label = QLabel("Quantidade: 0")
         self.counter_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(self.counter_label)
         
@@ -356,9 +349,10 @@ class MouseCoordinateApp(QWidget):
         self.codigos_list_widget.addItems(self.codigos_inseridos)
         if self.codigos_inseridos: self.counter = len(self.codigos_inseridos)
         else: self.counter = 0
-        self.counter_label.setText(f"Contador: {self.counter}")
+        self.counter_label.setText(f"Quantidade: {self.counter}")
 
-    def sound_success(self): winsound.Beep(int(self.sound_imput.value()) , int(self.sound_temp.value()))
+    def sound_success(self): 
+        winsound.Beep(int(self.sound_imput.value()) , int(self.sound_temp.value()))
         
     def start_inserir_codigo(self):
         if ( "pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != "" ):
