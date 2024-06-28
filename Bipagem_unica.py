@@ -10,7 +10,7 @@ import os
 import qrcode
 import io
 import pymysql
-import subprocess
+import threading
 import firebase_admin
 
 import pygetwindow as gw
@@ -42,8 +42,18 @@ from PyQt5.QtPrintSupport import (
     QPrinter,
     QPrintDialog
 )
-base = [ "FEIRA DE SANTANA","ALAGOINHAS", "JACOBINA", "SANTO ANTONIO DE JESUS", "DEVOLUÇÃO"]
 
+empresa = [
+    "LOGGI", "JADLOG", "SHOPEE", "ANJUN", "SEQUOIA"
+]
+base = [
+    "FEIRA DE SANTANA", "BAIRROS DE FEIRA DE SANTANA", "TRANSFERENCIA",
+    "ALAGOINHAS", "JACOBINA", "SANTO ANTONIO DE JESUS", "DEVOLUÇÃO" 
+]
+
+tranferencia = [
+    "TRANSFERENCIA PARA FEIRA", "TRANSFERENCIA PARA ALAGOINHAS", "TRANSFERENCIA PARA JACOBINA", "TRANSFERENCIA PARA SANTO ANTONIO DE JESUS"
+]
 cidades_feira = [
     "IPIRA", "BAIXA GRANDE", "MAIRI", "VARZEA DA ROÇA", "MORRO DO CHAPEU", "IRECE",
     "ITABERABA", "IAÇU", "ITATIM", "CASTRO ALVES", "SANTA TEREZINHA", "SANTO ESTEVÃO",
@@ -57,7 +67,7 @@ cidades_feira = [
     "RIACHÃO DO JACUIPE", "NOVA FATIMA", "PE DE SERRA", "CIPÓ", "BANZAÊ", "FATIMA",
     "CICERO DANTAS", "NOVA SOURE", "TUCANO", "RIBEIRA DO AMPARO", "SITIO DO QUINTO",
     "CORONEL JOÃO SÁ", "HELIOPOLIS", "RIBEIRA DO POMBAL", "ANGUERA", "SERRA PRETA",
-    "RAFAEL JAMBEIRO", "FEIRA DE SANTANA"
+    "RAFAEL JAMBEIRO", "FEIRA DE SANTANA", "BAIXA GRANDE"
 ]
 cidades_algoinhas = [
     "ALAGOINHAS","ACAJUTIBA","CONDE","CRISÓPOLIS","ENTRE RIOS","ESPLANADA","INHAMBUPE",
@@ -74,17 +84,36 @@ cidades_saj = [
     "VERA CRUZ","WENCESLAU GUIMARÃES"
 ]
 cidades_jacobina = [
-    "BAIXA GRANDE","CAÉM","MAIRI","MIGUEL CALMON","SERROLÂNDIA","VÁRZEA DO POÇO",
+    "CAÉM","MAIRI","MIGUEL CALMON","SERROLÂNDIA","VÁRZEA DO POÇO",
     "VÁRZEA NOVA","JACOBINA"
 ]
-devolucaos = ["DEVOLUÇÃO PARA LOGGI", "DEVOLUÇÃO PARA FEIRA", "DEVOLUÇÃO PARA JADLOG", "DEVOLUÇÃO PARA SHOPEE", "DEVOLUÇÃO PARA ANJUN", "DEVOLUÇÃO PARA SEQUOIA"]
-
+devolucaos = [
+    "DEVOLUÇÃO PARA LOGGI", "DEVOLUÇÃO PARA FEIRA", "DEVOLUÇÃO PARA JADLOG", 
+    "DEVOLUÇÃO PARA SHOPEE", "DEVOLUÇÃO PARA ANJUN", "DEVOLUÇÃO PARA SEQUOIA"
+]
+barrios_feria = [
+    "35º BI","ALTO DO CRUZEIRO","ALTO DO PAPAGAIO","ASA BRANCA","AVIÁRIO",
+    "BARAÚNAS","BRASÍLIA","CALUMBI","CAMPO DO GADO NOVO","CAMPO LIMPO",
+    "CASEB","CASEB","CENTRO","CIDADE NOVA","FEIRA IX","FEIRA IX","FEIRA VI",
+    "FEIRA VII","FEIRA VIII","FEIRA X","FEIRA X","GABRIELA","GEORGE AMÉRICO",
+    "JARDIM ACÁCIA","JARDIM CRUZEIRO","LAGOA SALGADA","LIMOEIRO","MANGABEIRA",
+    "MUCHILA","NOVA BRASÍLIA","NOVA ESPERANÇA","NOVA ESPERANÇA","NOVO HORIZONTE",
+    "PAPAGAIO","PARQUE GETÚLIO VARGAS","PARQUE IPÊ","PARQUE IPÊ","PARQUE LAGOA SUBAÉ",
+    "PARQUE VIVER","PONTO CENTRAL","QUEIMADINHA","RUA NOVA","SANTA MÔNICA",
+    "SANTO ANTÔNIO DOS PRAZERES","SÃO JOÃO","SIM","SÍTIO MATIAS","SOBRADINHO",
+    "SUBAÉ","TOMBA"
+]
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
+        self.currently_setting_position = None
         self.setWindowTitle("LC-Bipagem RTA")
+    
 
         layout = QVBoxLayout()
+        self.messagem = QLabel("Defina as posicoes dos mouse e aperte Enter.")
+        self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+        layout.addWidget(self.messagem)
 
         self.layout_nome = QHBoxLayout()
         self.nome_label = QLabel("Nome de Funcionario:")
@@ -100,6 +129,15 @@ class MouseCoordinateApp(QWidget):
         self.layout_entregador.addWidget(self.entregador_input)
         
         layout.addLayout(self.layout_entregador)
+        
+        self.layout_empresa = QHBoxLayout()
+        self.empresa_label = QLabel("Empresa de bipagem:")
+        self.layout_empresa.addWidget(self.empresa_label)
+        self.empresa_box = QComboBox()
+        self.empresa_box.addItems(empresa)
+        self.layout_empresa.addWidget(self.empresa_box)
+        layout.addLayout(self.layout_empresa)
+        
         self.layout_base = QHBoxLayout()
         self.base_label = QLabel("Região de destino:")
         self.layout_base.addWidget(self.base_label)
@@ -122,18 +160,16 @@ class MouseCoordinateApp(QWidget):
         layout.addWidget(self.label)
 
         position_layout = QHBoxLayout()
-        self.coord_label1 = QLabel("Posição 1: Não definida")
-        position_layout.addWidget(self.coord_label1)
+  
         self.button1 = QPushButton("Definir Posição 1")
-        self.button1.clicked.connect(self.set_position1)
+        self.button1.setStyleSheet("font-weight: bold; color: red;")
+        self.button1.clicked.connect(self.start_set_position1)
         position_layout.addWidget(self.button1)
         layout.addLayout(position_layout)
-
-        position_layout = QHBoxLayout()
-        self.coord_label2 = QLabel("Posição 2: Não definida")
-        position_layout.addWidget(self.coord_label2)
+        
         self.button2 = QPushButton("Definir Posição 2")
-        self.button2.clicked.connect(self.set_position2)
+        self.button2.setStyleSheet("font-weight: bold; color: red;")
+        self.button2.clicked.connect(self.start_set_position2)
         position_layout.addWidget(self.button2)
         layout.addLayout(position_layout)
 
@@ -146,7 +182,7 @@ class MouseCoordinateApp(QWidget):
         self.tempo1_spinbox.setRange(0, 5000)
         tempo_layout.addWidget(self.tempo1_spinbox)
 
-        self.label_tempo2 = QLabel("Tempo de espera:")
+        self.label_tempo2 = QLabel("Tempo de troca:")
         tempo_layout.addWidget(self.label_tempo2)
         self.tempo2_spinbox = QSpinBox()
         self.tempo2_spinbox.setRange(0, 5000)
@@ -155,13 +191,13 @@ class MouseCoordinateApp(QWidget):
         tempo_layout_base = QHBoxLayout()
         layout.addLayout(tempo_layout_base)
 
-        self.label_tempo_base = QLabel("Bipagem na base:")
+        self.label_tempo_base = QLabel("Colagem na posicão 1:")
         tempo_layout_base.addWidget(self.label_tempo_base)
         self.tempo_base_spinbox = QSpinBox()
         self.tempo_base_spinbox.setRange(0, 5)
         tempo_layout_base.addWidget(self.tempo_base_spinbox)
 
-        self.label_tempo_entregador = QLabel("Bipagem no entregador:")
+        self.label_tempo_entregador = QLabel("e posicão 2:")
         tempo_layout_base.addWidget(self.label_tempo_entregador)
         self.tempo_entregador_spinbox = QSpinBox()
         self.tempo_entregador_spinbox.setRange(0, 5)
@@ -177,26 +213,28 @@ class MouseCoordinateApp(QWidget):
         self.counter_label = QLabel("Contador: 0")
         self.counter_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(self.counter_label)
-
-        self.layout_search_label = QHBoxLayout()
-        self.search_label = QLabel("Busca na lista:")
-        self.layout_search_label.addWidget(self.search_label)
-        self.search_input = QLineEdit()
-        self.layout_search_label.addWidget(self.search_input)
-        self.search_input.textChanged.connect(self.filtrar_codigos)
-        layout.addLayout(self.layout_search_label)
-
-        self.delete_button = QPushButton("Delete o codigo selecionado")
+        
+        editList = QHBoxLayout()
+        layout.addLayout(editList)
+        
+        self.delete_button = QPushButton("Delete selecionado")
         self.delete_button.setStyleSheet("color: red;")
         self.delete_button.clicked.connect(self.deletar_codigo)
-        layout.addWidget(self.delete_button)
+        
+        self.layout_search_label = QHBoxLayout()
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Digite o codigo para buscar na lista")
+        self.layout_search_label.addWidget(self.search_input)
+        self.search_input.textChanged.connect(self.filtrar_codigos)
+        
+        editList.addLayout(self.layout_search_label)
+        editList.addWidget(self.delete_button)
 
         self.codigos_list_widget = QListWidget()
         layout.addWidget(self.codigos_list_widget)
 
-        self.adicionar_codigos = QLabel("Insira manualmente o código de barras:")
-        layout.addWidget(self.adicionar_codigos)
         self.adicionar_codigo_input = QLineEdit()
+        self.adicionar_codigo_input.setPlaceholderText("Insira aqui manualmente o código de barras")
         layout.addWidget(self.adicionar_codigo_input)
 
         self.button = QHBoxLayout()
@@ -209,9 +247,6 @@ class MouseCoordinateApp(QWidget):
         self.reset_list_button.clicked.connect(self.resetar_lista)
 
         layout.addLayout(self.button)
-
-        self.messagem = QLabel("Defina as posicoes dos mouse e aperte Enter.")
-        layout.addWidget(self.messagem)
         
         sound_layout = QHBoxLayout()
         layout.addLayout(sound_layout)
@@ -219,11 +254,14 @@ class MouseCoordinateApp(QWidget):
         self.sound_text = QLabel("Perfil de som:")
         sound_layout.addWidget(self.sound_text)
         self.sound_imput = QSpinBox()
-        self.sound_imput.setRange(0, 8000)
+        self.sound_imput.setRange(100, 9999)
+        self.sound_temp = QSpinBox()
+        self.sound_temp.setRange(150, 1500)
         sound_layout.addWidget(self.sound_imput)
+        sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.0.1")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.1.9")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -234,6 +272,7 @@ class MouseCoordinateApp(QWidget):
         self.tempo_base_spinbox.setValue(2)
         self.tempo2_spinbox.setValue(800)
         self.tempo1_spinbox.setValue(150)
+        self.sound_temp.setValue(250)
         self.sound_imput.setValue(3520)
         self.positions = {}
         self.counter = 0
@@ -258,25 +297,46 @@ class MouseCoordinateApp(QWidget):
             self.atualizar_cidades(sorted(cidades_feira)) 
         elif base_selecionada == "DEVOLUÇÃO":
             self.atualizar_cidades(sorted(devolucaos)) 
+        elif base_selecionada == "TRANSFERENCIA":
+            self.atualizar_cidades(sorted(tranferencia))
+        elif base_selecionada == "BAIRROS DE FEIRA DE SANTANA":
+            self.atualizar_cidades(sorted(barrios_feria))
 
     def atualizar_cidades(self, lista_cidades):
         self.combo_box.clear()
         self.combo_box.addItems(lista_cidades)
-            
-    def set_position1(self):
+        
+    def start_set_position1(self):
         self.messagem.setText("Posicione o mouse e pressione Enter.")
-        keyboard.wait("enter")
-        x, y = pyautogui.position()
-        self.positions["pos1"] = (x, y)
-        self.coord_label1.setText(f"Posição 1: ({x}, {y})")
+        self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+        self.currently_setting_position = 'pos1'
 
-    def set_position2(self):
+    def start_set_position2(self):
         self.messagem.setText("Posicione o mouse e pressione Enter.")
-        keyboard.wait("enter")
-        x, y = pyautogui.position()
-        self.positions["pos2"] = (x, y)
-        self.coord_label2.setText(f"Posição 2: ({x}, {y})")
+        self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+        self.currently_setting_position = 'pos2'
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+            if self.currently_setting_position:
+                x, y = pyautogui.position()
+                self.positions[self.currently_setting_position] = (x, y)
+                if self.currently_setting_position == 'pos1':
+                    self.update_button1_text(x, y)
+                elif self.currently_setting_position == 'pos2':
+                    self.update_button2_text(x, y)
+                self.currently_setting_position = None
+                self.messagem.setText("Clique nos botões para definir as posições.")
+                self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+
+    def update_button1_text(self, x, y):
+        self.button1.setText(f"Posição 1: ({x}, {y})")
+        self.button1.setStyleSheet("font-weight: bold; color: blue;")
+
+    def update_button2_text(self, x, y):
+        self.button2.setText(f"Posição 2: ({x}, {y})")
+        self.button2.setStyleSheet("font-weight: bold; color: blue;")
+        
     def carregar_codigos_inseridos(self):
         codigos_inseridos = set()
         if os.path.exists("codigos_inseridos.txt"):
@@ -298,13 +358,14 @@ class MouseCoordinateApp(QWidget):
         else: self.counter = 0
         self.counter_label.setText(f"Contador: {self.counter}")
 
-    def sound_success(self): winsound.Beep(int(self.sound_imput.value()) , 250)
+    def sound_success(self): winsound.Beep(int(self.sound_imput.value()) , int(self.sound_temp.value()))
         
     def start_inserir_codigo(self):
         if ( "pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != "" ):
             codigo_barras = self.entry.text()
             if len(codigo_barras) < 1:
                 self.messagem.setText( "Código de barras inválido. \nInsira um código com pelo menos 1 caractere." )
+                self.messagem.setStyleSheet("font-weight: bold; color: red;")
                 return
             
             if codigo_barras in self.codigos_inseridos:
@@ -312,6 +373,7 @@ class MouseCoordinateApp(QWidget):
                 self.bring_to_front()
                 winsound.Beep(820, 1000)
                 self.messagem.setText("Código de barras já inserido.")
+                self.messagem.setStyleSheet("font-weight: bold; color: red;")
                 return
 
             self.codigos_inseridos.add(codigo_barras)
@@ -323,131 +385,172 @@ class MouseCoordinateApp(QWidget):
             self.sound_success()
             self.bring_to_front()
             self.update_codigos_list_widget() 
-        else: self.messagem.setText( "Por favor, defina todas as posições, nome e entregador\nantes de iniciar." )
+        else: 
+            self.messagem.setText( "Por favor, defina todas as posições, nome e \nentregador antes de iniciar." )
+            self.messagem.setStyleSheet("font-weight: bold; color: red;")
             
     def bring_to_front(self):
         window = gw.getWindowsWithTitle(self.windowTitle())[0]
         if window: window.activate()
             
     def exportar_lista(self):
-        if ("pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != ""):
-            options = QFileDialog.Options()
-            now = datetime.datetime.now()
-            formatted_code = now.strftime("RTA%Y%m%d%H%M%S%f")[:-3] + "LC"
-
-            file_path, _ = QFileDialog.getSaveFileName(
-                self,
-                "Salvar Lista",
-                formatted_code + ", cidade. " + self.combo_box.currentText(),
-                "PDF Files (*.pdf);;All Files (*)",
-                options=options,
-            )
-
-            if file_path:
-                c = canvas.Canvas(file_path, pagesize=letter)
+        try:
+            if ("pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != ""):
+                options = QFileDialog.Options()
                 now = datetime.datetime.now()
-                formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
-                folder_date = now.strftime("%d-%m-%Y")
-                folder_name = self.entregador_input.text().upper()
-                folder_first = self.nome_input.text().upper()
+                formatted_code = now.strftime("RTA%Y%m%d%H%M%S%f")[:-3] + "LC"
 
-                c.drawString(70, 750, "Hora e Dia: " + formatted_now)
-                c.drawString(70, 735, "Funcionario: " + self.nome_input.text())
-                c.drawString(70, 720, "Entregador: " + self.entregador_input.text())
-                c.drawString(70, 705, self.counter_label.text())
-                c.drawString(70, 690, "Região: " + self.base_combo_box.currentText())
-                c.drawString(70, 675, "Cidade: " + self.combo_box.currentText())
-                c.drawString(70, 660, "Codigo de ficha: " + formatted_code)
-                c.drawString(70, 645, "Codigos inseridos:")
-                
-                qr_data = formatted_code
-                qr = qrcode.QRCode( 
-                    version=1,
-                    error_correction=qrcode.constants.ERROR_CORRECT_L,
-                    box_size=25,
-                    border=1,
+                file_path, _ = QFileDialog.getSaveFileName(
+                    self,
+                    "Salvar Lista",
+                    formatted_code + ", cidade. " + self.combo_box.currentText(),
+                    "PDF Files (*.pdf);;All Files (*)",
+                    options=options,
                 )
-                qr.add_data(qr_data)
-                qr.make(fit=True)
-                img = qr.make_image(fill='black', back_color='white')
 
-                qr_buffer = io.BytesIO()
-                img.save(qr_buffer, format='PNG')
-                qr_buffer.seek(0)
+                if file_path:
+                    c = canvas.Canvas(file_path, pagesize=letter)
+                    now = datetime.datetime.now()
+                    formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
+                    folder_date = now.strftime("%d-%m-%Y")
+                    folder_name = self.entregador_input.text().upper()
+                    folder_first = self.nome_input.text().upper()
+                    folder_zero = self.empresa_box.currentText().upper()
+                    
+                    c.drawString(350, 750, "Empresa de serviços: " + self.empresa_box.currentText())
+                    c.drawString(70, 750, "Hora e Dia: " + formatted_now)
+                    c.drawString(70, 735, "Funcionario: " + self.nome_input.text())
+                    c.drawString(70, 720, "Entregador: " + self.entregador_input.text())
+                    c.drawString(70, 705, self.counter_label.text())
+                    c.drawString(70, 690, "Região: " + self.base_combo_box.currentText())
+                    c.drawString(70, 675, "Cidade: " + self.combo_box.currentText())
+                    c.drawString(70, 660, "Codigo de ficha: " + formatted_code)
+                    c.drawString(70, 645, "Codigos inseridos:")
 
-                c.drawImage(ImageReader(qr_buffer), 400, 665, 100, 100) 
-                
-                y = 620
-                for codigo in self.codigos_inseridos:
-                    if y < 50:
-                        c.showPage()
-                        y = 750
-                    c.drawString(70, y, str(codigo))
-                    y -= 12
-                
-                c.save()
+                    qr_data = formatted_code
+                    qr = qrcode.QRCode( 
+                        version=1,
+                        error_correction=qrcode.constants.ERROR_CORRECT_L,
+                        box_size=25,
+                        border=1,
+                    )
+                    qr.add_data(qr_data)
+                    qr.make(fit=True)
+                    img = qr.make_image(fill='black', back_color='white')
 
-                with open('service-account-credentials.json') as json_file:
-                    data = json.load(json_file)
-                    service_account_info = data['google_service_account']
-                    mysql_info = data['mysql']
-                    firebase_credentials = data['firebase']
+                    qr_buffer = io.BytesIO()
+                    img.save(qr_buffer, format='PNG')
+                    qr_buffer.seek(0)
 
-                cred = credentials.Certificate(firebase_credentials)
-                firebase_admin.initialize_app(cred)
+                    c.drawImage(ImageReader(qr_buffer), 400, 635, 100, 100) 
 
-                db = firestore.client()
+                    y = 620
+                    for codigo in self.codigos_inseridos:
+                        if y < 50:
+                            c.showPage()
+                            y = 750
+                        c.drawString(70, y, str(codigo))
+                        y -= 12
 
-                credentials_drive = service_account.Credentials.from_service_account_info(service_account_info, scopes=["https://www.googleapis.com/auth/drive"])
-                drive_service = build("drive", "v3", credentials=credentials_drive)
-    
-                def find_or_create_folder(folder_name, parent_id=None):
-                    query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
-                    if parent_id:
-                        query += f" and '{parent_id}' in parents"
-                    response = drive_service.files().list(
-                        q=query,
-                        spaces="drive",
-                        fields="files(id, name)",
-                    ).execute()
-                    files = response.get("files", [])
-                    if files:
-                        return files[0]["id"]
-                    else:
-                        folder_metadata = {
-                            "name": folder_name,
-                            "mimeType": "application/vnd.google-apps.folder",
-                        }
+                    c.save()
+
+                    try:
+                        with open('service-account-credentials.json') as json_file:
+                            data = json.load(json_file)
+                            service_account_info = data['google_service_account']
+                            mysql_info = data['mysql']
+                            firebase_credentials = data['firebase']
+                    except Exception as e:
+                        self.messagem.setText(f"Erro ao carregar credenciais: {e}")
+                        self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                        return
+
+                    try:
+                        if not firebase_admin._apps:
+                            cred = credentials.Certificate(firebase_credentials)
+                            firebase_admin.initialize_app(cred)
+
+                        db = firestore.client()
+                    except Exception as e:
+                        self.messagem.setText(f"Erro ao inicializar Firebase: {e}")
+                        self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                        return
+
+                    try:
+                        credentials_drive = service_account.Credentials.from_service_account_info(service_account_info, scopes=["https://www.googleapis.com/auth/drive"])
+                        drive_service = build("drive", "v3", credentials=credentials_drive)
+                    except Exception as e:
+                        self.messagem.setText(f"Erro ao inicializar Google Drive: {e}")
+                        self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                        return
+
+                    def find_or_create_folder(folder_name, parent_id=None):
+                        query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
                         if parent_id:
-                            folder_metadata["parents"] = [parent_id]
-                        folder = drive_service.files().create(body=folder_metadata, fields="id").execute()
-                        return folder["id"]
+                            query += f" and '{parent_id}' in parents"
+                        response = drive_service.files().list(
+                            q=query,
+                            spaces="drive",
+                            fields="files(id, name)",
+                        ).execute()
+                        files = response.get("files", [])
+                        if files:
+                            return files[0]["id"]
+                        else:
+                            folder_metadata = {
+                                "name": folder_name,
+                                "mimeType": "application/vnd.google-apps.folder",
+                            }
+                            if parent_id:
+                                folder_metadata["parents"] = [parent_id]
+                            folder = drive_service.files().create(body=folder_metadata, fields="id").execute()
+                            return folder["id"]
 
-                main_folder_id = find_or_create_folder(folder_date, "15K7K7onfz98E2UV31sFHWIQf7RGWhApV")
-                first_subfolder_id = find_or_create_folder(folder_first, main_folder_id)
-                second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
-    
-                file_metadata = {
-                    "name": os.path.basename(file_path),
-                    "mimeType": "application/pdf",
-                    "parents": [second_subfolder_id],
-                }
-                media = MediaFileUpload(file_path, mimetype="application/pdf")
-                drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+                    try:
+                        main_folder_id = find_or_create_folder(folder_date, "15K7K7onfz98E2UV31sFHWIQf7RGWhApV")
+                        folder_zero_id = find_or_create_folder(folder_zero, main_folder_id)
+                        first_subfolder_id = find_or_create_folder(folder_first, folder_zero_id)
+                        second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
 
-                db.collection('bipagem').document(formatted_code).set({
-                    'Funcionario': self.nome_input.text(),
-                    'Entregador': self.entregador_input.text(),
-                    'Cidade': self.combo_box.currentText(),
-                    'Codigo de ficha': formatted_code,
-                    'Codigos inseridos': self.codigos_inseridos,
-                    'Hora e Dia': formatted_now
-                })
+                        file_metadata = {
+                            "name": os.path.basename(file_path),
+                            "mimeType": "application/pdf",
+                            "parents": [second_subfolder_id],
+                        }
+                        media = MediaFileUpload(file_path, mimetype="application/pdf")
+                        drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+                    except Exception as e:
+                        self.messagem.setText(f"Erro ao enviar arquivo para o Google Drive: {e}")
+                        self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                        return
 
-                self.resetar_lista()
-        else: self.messagem.setText("Por favor, defina todas as posições, nome e entregador\nantes de exportar.")
+                    try:
+                        db.collection('bipagem').document(formatted_code).set({
+                            'Empresa': self.empresa_box.currentText(),
+                            'Funcionario': self.nome_input.text(),
+                            'Entregador': self.entregador_input.text(),
+                            'Cidade': self.combo_box.currentText(),
+                            'Codigo de ficha': formatted_code,
+                            'Hora e Dia': formatted_now,
+                            'Inicio': "aguardando",
+                            'Fim': "aguardando",
+                            'Status': "aguardando",
+                            'Motorista': "aguardando",
+                            'Codigos inseridos': self.codigos_inseridos
+                        })
+                    except Exception as e:
+                        self.messagem.setText(f"Erro ao salvar dados no Firestore: {e}")
+                        self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                        return
 
-    
+                    self.resetar_lista()
+            else:
+                self.messagem.setText("Por favor, defina todas as posições, nome e \nentregador antes de exportar.")
+                self.messagem.setStyleSheet("font-weight: bold; color: red;")
+        except Exception as e:
+            self.messagem.setText(f"Erro inesperado: {e}")
+            self.messagem.setStyleSheet("font-weight: bold; color: red;")
+  
     def resetar_lista(self):
         self.codigos_inseridos.clear()
         if os.path.exists("codigos_inseridos.txt"): os.remove("codigos_inseridos.txt")
@@ -483,13 +586,16 @@ class MouseCoordinateApp(QWidget):
             self.bring_to_front()
             winsound.Beep(820, 1000)
             self.messagem.setText("Código de barras já inserido.")
+            self.messagem.setStyleSheet("font-weight: bold; color: red;")
             return
         if codigo_barras:
             self.codigos_inseridos.add(codigo_barras)
             self.salvar_codigo(codigo_barras)
             self.update_codigos_list_widget()
             self.adicionar_codigo_input.clear()
-        else: self.messagem.setText("Insira um código válido.")
+        else: 
+            self.messagem.setText("Insira um código válido.")
+            self.messagem.setStyleSheet("font-weight: bold; color: red;")
 
 def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2, tempo_entregador, tempo_base):
     coordenadas_base = [(x, y)] * tempo_base
