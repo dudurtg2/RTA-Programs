@@ -254,7 +254,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.1.9")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.2.1")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -319,8 +319,12 @@ class MouseCoordinateApp(QWidget):
                 elif self.currently_setting_position == 'pos2':
                     self.update_button2_text(x, y)
                 self.currently_setting_position = None
-                self.messagem.setText("Clique nos botões para definir as posições.")
-                self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+                if "pos1" in self.positions and "pos2" in self.positions:
+                    self.messagem.setText("Agora realize a inserção do código de barras.")
+                    self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+                else:
+                    self.messagem.setText("Agora defina a proxima posição.")
+                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
 
     def update_button1_text(self, x, y):
         self.button1.setText(f"Posição 1: ({x}, {y})")
@@ -586,6 +590,7 @@ class MouseCoordinateApp(QWidget):
             self.codigos_inseridos.add(codigo_barras)
             self.salvar_codigo(codigo_barras)
             self.update_codigos_list_widget()
+            self.sound_success()
             self.adicionar_codigo_input.clear()
         else: 
             self.messagem.setText("Insira um código válido.")
