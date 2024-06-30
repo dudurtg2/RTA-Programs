@@ -24,6 +24,7 @@ Com este automatizador, o processo de bipagem de mercadorias se torna mais efici
 
 
 # LAYOUT DO PROGRAMA
-   ![image](https://github.com/dudurtg2/LC_transporte_system/assets/83459496/69295e0e-31d6-40e5-ac6f-0d135437fff5)
+   ![image](https://github.com/dudurtg2/LC_transporte_system/assets/83459496/e8ff30fc-62eb-4aa8-ac78-c0c9d69469b1)
+
 
 
