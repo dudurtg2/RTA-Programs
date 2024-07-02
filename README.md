@@ -21,10 +21,12 @@
  - A bipagem será realizada automaticamente, e o contador será atualizado.
  - Exporte a lista de mercadorias bipadas quando desejar.
 Com este automatizador, o processo de bipagem de mercadorias se torna mais eficiente e menos suscetível a erros, proporcionando ganhos significativos de produtividade para a transportadora.
+# RTA Controle
+ - Além disso, este repositório inclui o RTA Controle, um programa que direciona Requisições de Transporte de Acompanhamento (RTAs) para os motoristas responsáveis, otimizando o processo de distribuição de tarefas na transportadora.
 
+# LAYOUT DOS PROGRAMAS
+   ![image](https://github.com/dudurtg2/LC_transporte_system/assets/83459496/da393681-4508-47d1-9fe8-ff743761f42b)
 
-# LAYOUT DO PROGRAMA
-   ![image](https://github.com/dudurtg2/LC_transporte_system/assets/83459496/e8ff30fc-62eb-4aa8-ac78-c0c9d69469b1)
 
 
 
