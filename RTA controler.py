@@ -2,6 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QMessageBox, QComboBox
 import firebase_admin
 from firebase_admin import credentials, firestore
+from PyQt5.QtCore import Qt
 import json
 
 with open('service-account-credentials.json') as json_file:
@@ -80,7 +81,7 @@ class FirebaseApp(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Lista de Documentos do Firebase")
+        self.setWindowTitle("RTA controler")
         self.setGeometry(100, 100, 600, 400)
 
         self.central_widget = QWidget()
@@ -127,6 +128,13 @@ class FirebaseApp(QMainWindow):
         self.delete_button = QPushButton("Deletar Documentos Selecionados")
         self.delete_button.clicked.connect(self.delete_documents)
         layout.addWidget(self.delete_button)
+        
+        self.ceos_label_layout = QHBoxLayout()
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão Alpha 0.1.1")
+        self.Ceos.setStyleSheet("color: gray;")
+        self.ceos_label_layout.addWidget(self.Ceos)
+        self.ceos_label_layout.setAlignment(Qt.AlignRight)
+        layout.addLayout(self.ceos_label_layout)
 
         self.load_documents()
 
