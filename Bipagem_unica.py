@@ -40,8 +40,8 @@ empresa = [
     "LOGGI", "JADLOG", "SHOPEE", "ANJUN", "SEQUOIA"
 ]
 base = [
-    "FEIRA DE SANTANA", "BAIRROS DE FEIRA DE SANTANA", "TRANSFERENCIA",
-    "ALAGOINHAS", "JACOBINA", "SANTO ANTONIO DE JESUS", "DEVOLUÇÃO" 
+    "FEIRA DE SANTANA", "BAIRROS DE FEIRA DE SANTANA", "ALAGOINHAS",
+    "JACOBINA", "SANTO ANTONIO DE JESUS", "TRANSFERENCIA", "DEVOLUÇÃO" 
 ]
 
 tranferencia = [
@@ -254,7 +254,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.2.1")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.2.9")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -282,18 +282,25 @@ class MouseCoordinateApp(QWidget):
         base_selecionada = self.base_combo_box.currentText()
         if base_selecionada == "ALAGOINHAS":
             self.atualizar_cidades(sorted(cidades_algoinhas))
+            self.cidade_label.setText("Cidade:")
         elif base_selecionada == "JACOBINA":
             self.atualizar_cidades(sorted(cidades_jacobina)) 
+            self.cidade_label.setText("Cidade:")
         elif base_selecionada == "SANTO ANTONIO DE JESUS":
             self.atualizar_cidades(sorted(cidades_saj))
+            self.cidade_label.setText("Cidade:")
         elif base_selecionada == "FEIRA DE SANTANA":
-            self.atualizar_cidades(sorted(cidades_feira)) 
+            self.atualizar_cidades(sorted(cidades_feira))
+            self.cidade_label.setText("Cidade:") 
         elif base_selecionada == "DEVOLUÇÃO":
-            self.atualizar_cidades(sorted(devolucaos)) 
+            self.atualizar_cidades(sorted(devolucaos))
+            self.cidade_label.setText("Local:") 
         elif base_selecionada == "TRANSFERENCIA":
             self.atualizar_cidades(sorted(tranferencia))
+            self.cidade_label.setText("Local:")
         elif base_selecionada == "BAIRROS DE FEIRA DE SANTANA":
             self.atualizar_cidades(sorted(barrios_feria))
+            self.cidade_label.setText("Bairros:")
 
     def atualizar_cidades(self, lista_cidades):
         self.combo_box.clear()
@@ -359,7 +366,7 @@ class MouseCoordinateApp(QWidget):
         winsound.Beep(int(self.sound_imput.value()) , int(self.sound_temp.value()))
         
     def start_inserir_codigo(self):
-        if ( "pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != "" ):
+        if ( "pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != ""):
             codigo_barras = self.entry.text()
             if len(codigo_barras) < 1:
                 self.messagem.setText( "Código de barras inválido. \nInsira um código com pelo menos 1 caractere." )
@@ -378,6 +385,9 @@ class MouseCoordinateApp(QWidget):
             self.salvar_codigo(codigo_barras)
             
             inserir_codigo(codigo_barras, *self.positions["pos1"], *self.positions["pos2"], self.tempo1_spinbox.value() / 1000, self.tempo2_spinbox.value() / 1000, self.tempo_entregador_spinbox.value(), self.tempo_base_spinbox.value())
+            
+            self.messagem.setText(f"Codigo de barras inserido com sucesso.")
+            self.messagem.setStyleSheet("font-weight: bold; color: blue;")
             
             self.entry.clear()
             self.sound_success()
@@ -421,7 +431,7 @@ class MouseCoordinateApp(QWidget):
                     c.drawString(70, 720, "Entregador: " + self.entregador_input.text())
                     c.drawString(70, 705, self.counter_label.text())
                     c.drawString(70, 690, "Região: " + self.base_combo_box.currentText())
-                    c.drawString(70, 675, "Cidade: " + self.combo_box.currentText())
+                    c.drawString(70, 675, self.cidade_label.text() + " " + self.combo_box.currentText())
                     c.drawString(70, 660, "Codigo de ficha: " + formatted_code)
                     c.drawString(70, 645, "Codigos inseridos:")
 
@@ -527,14 +537,15 @@ class MouseCoordinateApp(QWidget):
                             'Empresa': self.empresa_box.currentText(),
                             'Funcionario': self.nome_input.text(),
                             'Entregador': self.entregador_input.text(),
-                            'Cidade': self.combo_box.currentText(),
-                            'Codigo de ficha': formatted_code,
-                            'Hora e Dia': formatted_now,
+                            'Local': self.combo_box.currentText(),
+                            'Codigo_de_ficha': formatted_code,
+                            'Hora_e_Dia': formatted_now,
                             'Inicio': "aguardando",
                             'Fim': "aguardando",
                             'Status': "aguardando",
                             'Motorista': "aguardando",
-                            'Codigos inseridos': self.codigos_inseridos
+                            'Codigos inseridos': self.codigos_inseridos,
+                            'Rota': "aguardando"
                         })
                     except Exception as e:
                         self.messagem.setText(f"Erro ao salvar dados no Firestore: {e}")
@@ -603,6 +614,7 @@ def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2, tempo_entregador
         "aba1": {f"campo{i+1}": coord for i, coord in enumerate(coordenadas_base)},
         "aba2": {f"campo{i+1}": coord for i, coord in enumerate(coordenadas_entregador)},
     }
+
     pyperclip.copy(codigo_barras)
     for aba, campos in coordenadas_abas.items():
         for campo, coordenadas in campos.items():
