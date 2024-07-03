@@ -13,16 +13,8 @@ cred = credentials.Certificate(firebase_credentials)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-empresa = [
-    "LOGGI", "JADLOG", "SHOPEE", "ANJUN", "SEQUOIA"
-]
 base = [
-    "ROTAS","FEIRA DE SANTANA", "BAIRROS DE FEIRA DE SANTANA", "ALAGOINHAS",
-    "JACOBINA", "SANTO ANTONIO DE JESUS", "TRANSFERENCIA", "DEVOLUÇÃO" 
-]
-
-tranferencia = [
-    "TRANSFERENCIA PARA FEIRA", "TRANSFERENCIA PARA ALAGOINHAS", "TRANSFERENCIA PARA JACOBINA", "TRANSFERENCIA PARA SANTO ANTONIO DE JESUS"
+    "ROTAS", "FEIRA DE SANTANA", "TRANSFERENCIA"
 ]
 cidades_feira = [
     "IPIRA", "BAIXA GRANDE", "MAIRI", "VARZEA DA ROÇA", "MORRO DO CHAPEU", "IRECE",
@@ -39,42 +31,17 @@ cidades_feira = [
     "CORONEL JOÃO SÁ", "HELIOPOLIS", "RIBEIRA DO POMBAL", "ANGUERA", "SERRA PRETA",
     "RAFAEL JAMBEIRO", "FEIRA DE SANTANA", "BAIXA GRANDE"
 ]
-cidades_algoinhas = [
-    "ALAGOINHAS","ACAJUTIBA","CONDE","CRISÓPOLIS","ENTRE RIOS","ESPLANADA","INHAMBUPE",
-    "ITANAGRA","JANDAÍRA","MATA DE SÃO JOÃO","OURIÇANGAS","RIO REAL","SÁTIRO DIAS",
-    "ARATUÍPE","APORÁ","ARAMARI","ARAÇÁS","CARDEAL DA SILVA","CATU","ITAPICURU",
-    "OLINDINA"
-]
-cidades_saj = [
-    "CONCEIÇÃO DO ALMEIDA","ELÍSIO MEDRADO","ITAPARICA","ITUBERÁ","JIQUIRIÇÁ","LAJE",
-    "MUNIZ FERREIRA","MUTUÍPE","NILO PEÇANHA","SANTO ANTÔNIO DE JESUS",
-    "SÃO MIGUEL DAS MATAS","UBAÍRA","VALENÇA","VARZEDO","DOM MACEDO COSTA","ITAQUARA",
-    "NAZARÉ","TAPEROÁ","TEOLÂNDIA","IGRAPIÚNA","JAGUARIPE","AMARGOSA","CRAVOLÂNDIA",
-    "GANDU","NOVA IBIÁ","PRESIDENTE TANCREDO NEVES","SALINAS DA MARGARIDA","SANTA INÊS",
-    "VERA CRUZ","WENCESLAU GUIMARÃES"
-]
-cidades_jacobina = [
-    "CAÉM","MAIRI","MIGUEL CALMON","SERROLÂNDIA","VÁRZEA DO POÇO",
-    "VÁRZEA NOVA","JACOBINA"
-]
-devolucaos = [
-    "DEVOLUÇÃO PARA LOGGI", "DEVOLUÇÃO PARA FEIRA", "DEVOLUÇÃO PARA JADLOG", 
-    "DEVOLUÇÃO PARA SHOPEE", "DEVOLUÇÃO PARA ANJUN", "DEVOLUÇÃO PARA SEQUOIA"
-]
-barrios_feria = [
-    "35º BI","ALTO DO CRUZEIRO","ALTO DO PAPAGAIO","ASA BRANCA","AVIÁRIO",
-    "BARAÚNAS","BRASÍLIA","CALUMBI","CAMPO DO GADO NOVO","CAMPO LIMPO",
-    "CASEB","CASEB","CENTRO","CIDADE NOVA","FEIRA IX","FEIRA IX","FEIRA VI",
-    "FEIRA VII","FEIRA VIII","FEIRA X","FEIRA X","GABRIELA","GEORGE AMÉRICO",
-    "JARDIM ACÁCIA","JARDIM CRUZEIRO","LAGOA SALGADA","LIMOEIRO","MANGABEIRA",
-    "MUCHILA","NOVA BRASÍLIA","NOVA ESPERANÇA","NOVA ESPERANÇA","NOVO HORIZONTE",
-    "PAPAGAIO","PARQUE GETÚLIO VARGAS","PARQUE IPÊ","PARQUE IPÊ","PARQUE LAGOA SUBAÉ",
-    "PARQUE VIVER","PONTO CENTRAL","QUEIMADINHA","RUA NOVA","SANTA MÔNICA",
-    "SANTO ANTÔNIO DOS PRAZERES","SÃO JOÃO","SIM","SÍTIO MATIAS","SOBRADINHO",
-    "SUBAÉ","TOMBA"
+tranferencia = [
+    "TRANSFERENCIA PARA FEIRA", "TRANSFERENCIA PARA ALAGOINHAS", "TRANSFERENCIA PARA JACOBINA", "TRANSFERENCIA PARA SANTO ANTONIO DE JESUS"
 ]
 rotas = [
-    "aguardando", "ROTA 01", "ROTA 02", "ROTA 03", "ROTA 04", "ROTA 05", "ROTA 06", "ROTA 07"
+    "aguardando", "001", "002", "003", "004", "005", "008"
+]
+status = [
+    "aguardando", "em rota"
+]
+morotista = [
+    
 ]
 tipo = "Rota"
 class FirebaseApp(QMainWindow):
@@ -107,6 +74,7 @@ class FirebaseApp(QMainWindow):
         layout.addLayout(self.layout_cidade)
         self.combo_box.currentIndexChanged.connect(self.on_cidade_selected)
 
+        
         self.label = QLabel("Documentos na coleção:")
         layout.addWidget(self.label)
 
@@ -128,15 +96,39 @@ class FirebaseApp(QMainWindow):
         self.delete_button = QPushButton("Deletar Documentos Selecionados")
         self.delete_button.clicked.connect(self.delete_documents)
         layout.addWidget(self.delete_button)
+
+        self.layout_entregador = QHBoxLayout()
+        self.entregador_label = QLabel("Motoristas:")
+        self.layout_entregador.addWidget(self.entregador_label)
+        self.combo_box_entregador = QComboBox()
+        self.layout_entregador.addWidget(self.combo_box_entregador)
+        layout.addLayout(self.layout_entregador)
+        
+        self.direciona_button = QPushButton("Direciona pacotes para motoristas")
+        self.direciona_button.clicked.connect(self.direciona_pacotes)
+        self.remover_direciona_button = QPushButton("Remover pacotes para motoristas")
+        self.remover_direciona_button.clicked.connect(self.remover_direciona_pacotes)
+        layout.addWidget(self.direciona_button)
+        layout.addWidget(self.remover_direciona_button)
+
         
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão Alpha 0.1.1")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão Alpha 0.2.9")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
         layout.addLayout(self.ceos_label_layout)
 
         self.load_documents()
+        self.users()
+    
+    def users(self):
+        users_ref = db.collection('usuarios')
+        documents = users_ref.stream()
+        for doc in documents:
+            morotista.append(f"{doc.to_dict()['nome']}")
+        self.combo_box_entregador.addItems(morotista)
+
 
     def on_cidade_selected(self, index):
         self.load_documents()
@@ -200,13 +192,14 @@ class FirebaseApp(QMainWindow):
             data = doc.to_dict()
             rota = data.get('Rota', 'Campo não encontrado')
             cidade = data.get('Local', 'Campo não encontrado')
-            hora_dia = data.get('Hora e Dia', 'Campo não encontrado')
+            hora_dia = data.get('Hora_e_Dia', 'Campo não encontrado')
             campo_valor = f"Rota: {rota}, Local: {cidade}, Data e Hora: {hora_dia}"
             self.list_widget.addItem(f"ID: {doc.id}, {campo_valor}")
 
     def documents(self):
         global tipo  
         self.list_widget.clear()
+    
         collection_ref = db.collection('bipagem')
         docs = collection_ref.where('Status', '==', 'aguardando').stream()
         
@@ -214,7 +207,7 @@ class FirebaseApp(QMainWindow):
             data = doc.to_dict()
             rota = data.get('Rota', 'Campo não encontrado')
             cidade = data.get('Local', 'Campo não encontrado')
-            hora_dia = data.get('Hora e Dia', 'Campo não encontrado')
+            hora_dia = data.get('Hora_e_Dia', 'Campo não encontrado')
             campo_valor = f"Rota: {rota}, Local: {cidade}, Data e Hora: {hora_dia}"
             self.list_widget.addItem(f"ID: {doc.id}, {campo_valor}")
 
@@ -232,7 +225,7 @@ class FirebaseApp(QMainWindow):
                     data = doc.to_dict()
                     rota = data.get('Rota', 'Campo não encontrado')
                     cidade = data.get('Local', 'Campo não encontrado')
-                    hora_dia = data.get('Hora e Dia', 'Campo não encontrado')
+                    hora_dia = data.get('Hora_e_Dia', 'Campo não encontrado')
                     campo_valor = f"Rota: {rota}, Local: {cidade}, Data e Hora: {hora_dia}"
                     self.list_widget.addItem(f"ID: {doc.id}, {campo_valor}")
                 else:
@@ -241,6 +234,46 @@ class FirebaseApp(QMainWindow):
                 print(f"Erro ao buscar documento: {e}")
         else:
             self.documents()
+    def direciona_pacotes(self):
+        selected_items = self.list_widget.selectedItems()
+        if selected_items:
+            motorista = self.combo_box_entregador.currentText()
+            motorista_ref = db.collection('usuarios').where('nome', '==', motorista).limit(1).stream()
+            motorista_doc = next(motorista_ref, None)
+            if motorista_doc:
+                motorista_uid = motorista_doc.id
+                doc_ids = [item.text().split(',')[0].split(':')[1].strip() for item in selected_items]
+                try:
+                    for doc_id in doc_ids:
+                        db.collection('bipagem').document(doc_id).update({'Motorista': motorista_uid})
+                    QMessageBox.information(self, "Sucesso", f"Pacotes direcionados com sucesso para {motorista}.")
+                    self.load_documents()
+                except Exception as e:
+                    QMessageBox.critical(self, "Erro", f"Erro ao direcionar pacotes: {e}")
+            else:
+                QMessageBox.warning(self, "Atenção", "Motorista não encontrado.")
+        else:
+            QMessageBox.warning(self, "Atenção", "Por favor, selecione pelo menos um pacote para direcionar.")
+    
+    def remover_direciona_pacotes(self):
+        selected_items = self.list_widget.selectedItems()
+        if selected_items:
+            motorista = self.combo_box_entregador.currentText()
+            motorista_ref = db.collection('usuarios').where('nome', '==', motorista).limit(1).stream()
+            motorista_doc = next(motorista_ref, None)
+            if motorista_doc:
+                doc_ids = [item.text().split(',')[0].split(':')[1].strip() for item in selected_items]
+                try:
+                    for doc_id in doc_ids:
+                        db.collection('bipagem').document(doc_id).update({'Motorista': "aguardando"})
+                    QMessageBox.information(self, "Sucesso", f"Pacotes removidos com sucesso de {motorista}.")
+                    self.load_documents()
+                except Exception as e:
+                    QMessageBox.critical(self, "Erro", f"Erro ao remover pacotes: {e}")
+            else:
+                QMessageBox.warning(self, "Atenção", "Motorista não encontrado.")
+        else:
+            QMessageBox.warning(self, "Atenção", "Por favor, selecione pelo menos um pacote para remover.")
 
     def delete_documents(self):
         selected_items = self.list_widget.selectedItems()
@@ -248,7 +281,7 @@ class FirebaseApp(QMainWindow):
             doc_ids = [item.text().split(',')[0].split(':')[1].strip() for item in selected_items]
             try:
                 for doc_id in doc_ids:
-                    db.collection('bipagem').document(doc_id).delete()
+                    db.collection('bipagem').document(doc_id)
                 QMessageBox.information(self, "Sucesso", f"Documentos deletados com sucesso.")
                 self.load_documents()
             except Exception as e:

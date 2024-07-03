@@ -35,6 +35,42 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QComboBox
 )
+rota_01 = [
+    "IPIRA","BAIXA GRANDE","MAIRI","VARZEA DA ROÇA","ITABERABA","IAÇU","ITATIM","CASTRO ALVES","SANTA TEREZINHA","MORRO DO CHAPEU","IRECE"
+]
+rota_02 = [
+    "AMELIA RODRIGUES","CONCEIÇÃO DO JACUIPE","CORAÇÃO DE MARIA","TEODORO SAMPAIO","IRARA","SANTANOPOLIS","SANTA BARBARA","LAMARÃO ","AGUA FRIA"
+]
+rota_03 = [
+    "MURITIBA","SAPEAÇU","CRUZ DAS ALMAS","GOVERNADOR MANGABEIRA","CABACEIRA DO PARAGUAÇU","SÃO FELIPE","MARAGOGIPE","CACHOEIRA ","SÃO FELIX","CONCEIÇÃO DA FEIRA"
+]
+rota_04 = [
+    "SERRINHA","BIRITINGA","BARROCAS","ARACI","TEOFILANDIA","TANQUINHO","CANDEAL","ICHU","CONCEIÇÃO DO COITÉ","RIACHÃO DO JACUIPE","PE DE SERRA"
+]
+rota_05 = [
+    "VALENTE","RETIROLANDIA","SANTA LUZ","CANSANÇÃO","QUEIMADAS","SÃO DOMINGOS","NOVA FATIMA"
+]
+rota_06 = [
+    "CIPÓ","BANZAÊ","FATIMA","CICERO DANTAS","NOVA SOURE","TUCANO","RIBEIRA DO AMPARO","SITIO DO QUINTO","CORONEL JOÃO SÁ","HELIOPOLIS","RIBEIRA DO POMBAL"
+]
+rota_07 = [
+    "SANTO ESTEVÃO","ANTONIO CARDOSO","IPECAETA","SÃO GONÇALO DOS CAMPOS"
+]
+
+cidades_feira = rota_01 + rota_02 + rota_03 + rota_04 + rota_05 + rota_06 + rota_07
+
+barrios_feria = [
+    "35º BI","ALTO DO CRUZEIRO","ALTO DO PAPAGAIO","ASA BRANCA","AVIÁRIO",
+    "BARAÚNAS","BRASÍLIA","CALUMBI","CAMPO DO GADO NOVO","CAMPO LIMPO",
+    "CASEB","CASEB","CENTRO","CIDADE NOVA","FEIRA IX","FEIRA IX","FEIRA VI",
+    "FEIRA VII","FEIRA VIII","FEIRA X","FEIRA X","GABRIELA","GEORGE AMÉRICO",
+    "JARDIM ACÁCIA","JARDIM CRUZEIRO","LAGOA SALGADA","LIMOEIRO","MANGABEIRA",
+    "MUCHILA","NOVA BRASÍLIA","NOVA ESPERANÇA","NOVA ESPERANÇA","NOVO HORIZONTE",
+    "PAPAGAIO","PARQUE GETÚLIO VARGAS","PARQUE IPÊ","PARQUE IPÊ","PARQUE LAGOA SUBAÉ",
+    "PARQUE VIVER","PONTO CENTRAL","QUEIMADINHA","RUA NOVA","SANTA MÔNICA",
+    "SANTO ANTÔNIO DOS PRAZERES","SÃO JOÃO","SIM","SÍTIO MATIAS","SOBRADINHO",
+    "SUBAÉ","TOMBA"
+]
 
 empresa = [
     "LOGGI", "JADLOG", "SHOPEE", "ANJUN", "SEQUOIA"
@@ -43,25 +79,14 @@ base = [
     "FEIRA DE SANTANA", "BAIRROS DE FEIRA DE SANTANA", "ALAGOINHAS",
     "JACOBINA", "SANTO ANTONIO DE JESUS", "TRANSFERENCIA", "DEVOLUÇÃO" 
 ]
-
 tranferencia = [
     "TRANSFERENCIA PARA FEIRA", "TRANSFERENCIA PARA ALAGOINHAS", "TRANSFERENCIA PARA JACOBINA", "TRANSFERENCIA PARA SANTO ANTONIO DE JESUS"
 ]
-cidades_feira = [
-    "IPIRA", "BAIXA GRANDE", "MAIRI", "VARZEA DA ROÇA", "MORRO DO CHAPEU", "IRECE",
-    "ITABERABA", "IAÇU", "ITATIM", "CASTRO ALVES", "SANTA TEREZINHA", "SANTO ESTEVÃO",
-    "ANTONIO CARDOSO", "IPECAETA", "SÃO GONÇALO DOS CAMPOS", "CACHOEIRA", "SÃO FELIX",
-    "CONCEIÇÃO DA FEIRA", "AMELIA RODRIGUES", "CONCEIÇÃO DO JACUIPE", "CORAÇÃO DE MARIA",
-    "TEODORO SAMPAIO", "IRARA", "SANTANOPOLIS", "MURITIBA", "SAPEAÇU", "CRUZ DAS ALMAS",
-    "GOVERNADOR MANGABEIRA", "CABACEIRA DO PARAGUAÇU", "SÃO FELIPE",
-    "MARAGOGIPE", "TANQUINHO", "CANDEAL", "ICHU", "SERRINHA", "BIRITINGA", "BARROCAS",
-    "ARACI", "TEOFILANDIA", "SANTA BARBARA", "LAMARÃO", "AGUA FRIA", "CONCEIÇÃO DO COITÉ",
-    "VALENTE", "RETIROLANDIA", "SANTA LUZ", "CANSANÇÃO", "QUEIMADAS", "SÃO DOMINGOS",
-    "RIACHÃO DO JACUIPE", "NOVA FATIMA", "PE DE SERRA", "CIPÓ", "BANZAÊ", "FATIMA",
-    "CICERO DANTAS", "NOVA SOURE", "TUCANO", "RIBEIRA DO AMPARO", "SITIO DO QUINTO",
-    "CORONEL JOÃO SÁ", "HELIOPOLIS", "RIBEIRA DO POMBAL", "ANGUERA", "SERRA PRETA",
-    "RAFAEL JAMBEIRO", "FEIRA DE SANTANA", "BAIXA GRANDE"
+devolucaos = [
+    "DEVOLUÇÃO PARA LOGGI", "DEVOLUÇÃO PARA FEIRA", "DEVOLUÇÃO PARA JADLOG", 
+    "DEVOLUÇÃO PARA SHOPEE", "DEVOLUÇÃO PARA ANJUN", "DEVOLUÇÃO PARA SEQUOIA"
 ]
+
 cidades_algoinhas = [
     "ALAGOINHAS","ACAJUTIBA","CONDE","CRISÓPOLIS","ENTRE RIOS","ESPLANADA","INHAMBUPE",
     "ITANAGRA","JANDAÍRA","MATA DE SÃO JOÃO","OURIÇANGAS","RIO REAL","SÁTIRO DIAS",
@@ -77,25 +102,12 @@ cidades_saj = [
     "VERA CRUZ","WENCESLAU GUIMARÃES"
 ]
 cidades_jacobina = [
-    "CAÉM","MAIRI","MIGUEL CALMON","SERROLÂNDIA","VÁRZEA DO POÇO",
+    "CAÉM","MIGUEL CALMON","SERROLÂNDIA","VÁRZEA DO POÇO",
     "VÁRZEA NOVA","JACOBINA"
 ]
-devolucaos = [
-    "DEVOLUÇÃO PARA LOGGI", "DEVOLUÇÃO PARA FEIRA", "DEVOLUÇÃO PARA JADLOG", 
-    "DEVOLUÇÃO PARA SHOPEE", "DEVOLUÇÃO PARA ANJUN", "DEVOLUÇÃO PARA SEQUOIA"
-]
-barrios_feria = [
-    "35º BI","ALTO DO CRUZEIRO","ALTO DO PAPAGAIO","ASA BRANCA","AVIÁRIO",
-    "BARAÚNAS","BRASÍLIA","CALUMBI","CAMPO DO GADO NOVO","CAMPO LIMPO",
-    "CASEB","CASEB","CENTRO","CIDADE NOVA","FEIRA IX","FEIRA IX","FEIRA VI",
-    "FEIRA VII","FEIRA VIII","FEIRA X","FEIRA X","GABRIELA","GEORGE AMÉRICO",
-    "JARDIM ACÁCIA","JARDIM CRUZEIRO","LAGOA SALGADA","LIMOEIRO","MANGABEIRA",
-    "MUCHILA","NOVA BRASÍLIA","NOVA ESPERANÇA","NOVA ESPERANÇA","NOVO HORIZONTE",
-    "PAPAGAIO","PARQUE GETÚLIO VARGAS","PARQUE IPÊ","PARQUE IPÊ","PARQUE LAGOA SUBAÉ",
-    "PARQUE VIVER","PONTO CENTRAL","QUEIMADINHA","RUA NOVA","SANTA MÔNICA",
-    "SANTO ANTÔNIO DOS PRAZERES","SÃO JOÃO","SIM","SÍTIO MATIAS","SOBRADINHO",
-    "SUBAÉ","TOMBA"
-]
+
+rota = "002"
+
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -147,6 +159,7 @@ class MouseCoordinateApp(QWidget):
         self.combo_box.addItems(sorted(cidades_feira))
         self.layout_cidade.addWidget(self.combo_box)
         layout.addLayout(self.layout_cidade)
+        self.combo_box.currentIndexChanged.connect(self.on_cidade_selected)
 
         self.label = QLabel("Clique nos botões para definir a posição do mouse:")
         self.label.setStyleSheet("font-weight: bold;")
@@ -254,13 +267,14 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.2.9")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.3.4")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
         layout.addLayout(self.ceos_label_layout)
 
         self.setLayout(layout)
+        
         self.tempo_entregador_spinbox.setValue(1)
         self.tempo_base_spinbox.setValue(2)
         self.tempo2_spinbox.setValue(800)
@@ -275,8 +289,27 @@ class MouseCoordinateApp(QWidget):
         self.update_codigos_list_widget()
         
     def on_cidade_selected(self, index):
+        global rota
         selected_cidade = self.combo_box.currentText()
-        self.selected_label.setText(f"Cidade selecionada: {selected_cidade}")
+        if selected_cidade in rota_01:
+            rota = "001"
+        elif selected_cidade in rota_02:
+            rota = "002"
+        elif selected_cidade in rota_03:
+            rota = "003"
+        elif selected_cidade in rota_04:
+            rota = "004"
+        elif selected_cidade in rota_05:
+            rota = "005"
+        elif selected_cidade in tranferencia:
+            rota = "008"
+        elif selected_cidade in rota_06 or selected_cidade in rota_07:
+            rota = "base"
+        elif selected_cidade in cidades_algoinhas or selected_cidade in cidades_jacobina or selected_cidade in cidades_saj:
+            rota = "base"
+        else:
+            rota = "base"
+            
     
     def on_base_selected(self, index):
         base_selecionada = self.base_combo_box.currentText()
@@ -301,7 +334,7 @@ class MouseCoordinateApp(QWidget):
         elif base_selecionada == "BAIRROS DE FEIRA DE SANTANA":
             self.atualizar_cidades(sorted(barrios_feria))
             self.cidade_label.setText("Bairros:")
-
+        self.on_cidade_selected(self)
     def atualizar_cidades(self, lista_cidades):
         self.combo_box.clear()
         self.combo_box.addItems(lista_cidades)
@@ -402,8 +435,9 @@ class MouseCoordinateApp(QWidget):
         if window: window.activate()
             
     def exportar_lista(self):
+        global rota
         try:
-            if ("pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != ""):
+            if (self.nome_input.text() != "" and self.entregador_input.text() != ""):
                 options = QFileDialog.Options()
                 now = datetime.datetime.now()
                 formatted_code = now.strftime("RTA%Y%m%d%H%M%S%f")[:-3] + "LC"
@@ -533,20 +567,23 @@ class MouseCoordinateApp(QWidget):
                         return
 
                     try:
-                        db.collection('bipagem').document(formatted_code).set({
-                            'Empresa': self.empresa_box.currentText(),
-                            'Funcionario': self.nome_input.text(),
-                            'Entregador': self.entregador_input.text(),
-                            'Local': self.combo_box.currentText(),
-                            'Codigo_de_ficha': formatted_code,
-                            'Hora_e_Dia': formatted_now,
-                            'Inicio': "aguardando",
-                            'Fim': "aguardando",
-                            'Status': "aguardando",
-                            'Motorista': "aguardando",
-                            'Codigos inseridos': self.codigos_inseridos,
-                            'Rota': "aguardando"
-                        })
+                        if rota != "base":
+                            db.collection('bipagem').document(formatted_code).set({
+                                'Empresa': self.empresa_box.currentText(),
+                                'Funcionario': self.nome_input.text(),
+                                'Entregador': self.entregador_input.text(),
+                                'Local': self.combo_box.currentText(),
+                                'Codigo_de_ficha': formatted_code,
+                                'Hora_e_Dia': formatted_now,
+                                'Inicio': "aguardando",
+                                'Fim': "aguardando",
+                                'Status': "aguardando",
+                                'Motorista': "aguardando",
+                                'Codigos inseridos': self.codigos_inseridos,
+                                'Rota': rota
+                            })
+                        else:
+                            pass
                     except Exception as e:
                         self.messagem.setText(f"Erro ao salvar dados no Firestore: {e}")
                         self.messagem.setStyleSheet("font-weight: bold; color: red;")
@@ -554,7 +591,7 @@ class MouseCoordinateApp(QWidget):
 
                     self.resetar_lista()
             else:
-                self.messagem.setText("Por favor, defina todas as posições, nome e \nentregador antes de exportar.")
+                self.messagem.setText("Por favor, defina nome e entregador \nantes de exportar.")
                 self.messagem.setStyleSheet("font-weight: bold; color: red;")
         except Exception as e:
             self.messagem.setText(f"Erro inesperado: {e}")
