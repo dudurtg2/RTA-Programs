@@ -281,7 +281,7 @@ class FirebaseApp(QMainWindow):
             doc_ids = [item.text().split(',')[0].split(':')[1].strip() for item in selected_items]
             try:
                 for doc_id in doc_ids:
-                    db.collection('bipagem').document(doc_id)
+                    db.collection('bipagem').document(doc_id).delete()
                 QMessageBox.information(self, "Sucesso", f"Documentos deletados com sucesso.")
                 self.load_documents()
             except Exception as e:
