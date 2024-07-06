@@ -267,7 +267,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.3.4")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.4.4")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -445,7 +445,7 @@ class MouseCoordinateApp(QWidget):
                 file_path, _ = QFileDialog.getSaveFileName(
                     self,
                     "Salvar Lista",
-                    formatted_code + ", cidade. " + self.combo_box.currentText(),
+                    formatted_code + ", entregador. " + self.entregador_input.text().upper(),
                     "PDF Files (*.pdf);;All Files (*)",
                     options=options,
                 )
@@ -455,7 +455,7 @@ class MouseCoordinateApp(QWidget):
                     now = datetime.datetime.now()
                     formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
                     folder_date = now.strftime("%d-%m-%Y")
-                    folder_name = self.entregador_input.text().upper()
+                    folder_name = self.combo_box.currentText()
                     folder_first = self.nome_input.text().upper()
                     folder_zero = self.empresa_box.currentText().upper()
                     
@@ -557,10 +557,23 @@ class MouseCoordinateApp(QWidget):
                         file_metadata = {
                             "name": os.path.basename(file_path),
                             "mimeType": "application/pdf",
+                            "supportsAllDrives": True,
+                            "visibility": "public", 
                             "parents": [second_subfolder_id],
                         }
                         media = MediaFileUpload(file_path, mimetype="application/pdf")
-                        drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+                        uploaded_file = drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+
+                       
+                        file_id = uploaded_file.get('id')
+
+                        
+                        permission = {
+                            'role': 'reader',
+                            'type': 'anyone',
+                        }
+                        drive_service.permissions().create(fileId=file_id, body=permission).execute()
+                        public_url = f"https://drive.google.com/uc?id={file_id}&export=download"
                     except Exception as e:
                         self.messagem.setText(f"Erro ao enviar arquivo para o Google Drive: {e}")
                         self.messagem.setStyleSheet("font-weight: bold; color: red;")
@@ -575,12 +588,14 @@ class MouseCoordinateApp(QWidget):
                                 'Local': self.combo_box.currentText(),
                                 'Codigo_de_ficha': formatted_code,
                                 'Hora_e_Dia': formatted_now,
+                                'Quantidade': self.counter_label.text(),
                                 'Inicio': "aguardando",
                                 'Fim': "aguardando",
                                 'Status': "aguardando",
                                 'Motorista': "aguardando",
                                 'Codigos inseridos': self.codigos_inseridos,
-                                'Rota': rota
+                                'Rota': rota,
+                                'Download_link': public_url
                             })
                         else:
                             pass

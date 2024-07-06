@@ -4,6 +4,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from PyQt5.QtCore import Qt
 import json
+import textwrap
 
 with open('service-account-credentials.json') as json_file:
     data = json.load(json_file)
@@ -38,7 +39,7 @@ rotas = [
     "001", "002", "003", "004", "005", "008"
 ]
 status = [
-    "direcionado"
+    "Direcionado" , "Recusado", "Retirado", "Finalizado", "Ocorrencia"
 ]
 morotista = [
     
@@ -105,16 +106,24 @@ class FirebaseApp(QMainWindow):
         layout.addLayout(self.layout_entregador)
         self.combo_box_entregador.currentIndexChanged.connect(self.on_cidade_selected)
         
-        self.direciona_button = QPushButton("Direciona pacotes para motoristas")
+        tempo_layout_base = QHBoxLayout()
+        layout.addLayout(tempo_layout_base)
+        
+        self.direciona_button = QPushButton("Distribuir para motoristas")
         self.direciona_button.clicked.connect(self.direciona_pacotes)
-        self.remover_direciona_button = QPushButton("Remover pacotes para motoristas")
+        tempo_layout_base.addWidget(self.direciona_button)
+        
+        self.libera_button = QPushButton("Liberar ocorrencia")
+        self.libera_button.clicked.connect(self.liberar)
+        tempo_layout_base.addWidget(self.libera_button)
+
+        self.remover_direciona_button = QPushButton("Remover do motorista")
         self.remover_direciona_button.clicked.connect(self.remover_direciona_pacotes)
-        layout.addWidget(self.direciona_button)
-        layout.addWidget(self.remover_direciona_button)
+        tempo_layout_base.addWidget(self.remover_direciona_button)
 
         
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão Alpha 0.2.9")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão Beta 1.5.3")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -122,6 +131,7 @@ class FirebaseApp(QMainWindow):
         
         
         self.remover_direciona_button.setEnabled(False)
+        self.libera_button.setEnabled(False)
         self.direciona_button.setEnabled(True)
         self.load_documents()
         self.users()
@@ -145,24 +155,35 @@ class FirebaseApp(QMainWindow):
         global tipo  
         base_selecionada = self.base_combo_box.currentText()
         self.remover_direciona_button.setEnabled(False)
+        self.libera_button.setEnabled(False)
         self.direciona_button.setEnabled(True)
         if base_selecionada == "FEIRA DE SANTANA":
             self.atualizar_cidades(sorted(cidades_feira))
+            self.remover_direciona_button.setEnabled(False)
+            self.libera_button.setEnabled(False)
+            self.direciona_button.setEnabled(True)
             self.cidade_label.setText("Cidade:")
             tipo = "Local" 
         elif base_selecionada == "TRANSFERENCIA":
             self.atualizar_cidades(sorted(tranferencia))
             self.cidade_label.setText("Local:")
+            self.remover_direciona_button.setEnabled(False)
+            self.libera_button.setEnabled(False)
+            self.direciona_button.setEnabled(True)
             tipo = "Local"
         elif base_selecionada == "ROTAS":
             self.atualizar_cidades(rotas)
+            self.remover_direciona_button.setEnabled(False)
+            self.libera_button.setEnabled(False)
+            self.direciona_button.setEnabled(True)
             self.cidade_label.setText("Rota:")
             tipo = "Rota"
         elif base_selecionada == "DIRECIONADO":
-            self.atualizar_cidades(rotas)
+            self.atualizar_cidades(status)
             self.remover_direciona_button.setEnabled(True)
+            self.libera_button.setEnabled(False)
             self.direciona_button.setEnabled(False)
-            self.cidade_label.setText("Rota:")
+            self.cidade_label.setText("Status:")
             tipo = "Status"
         self.on_cidade_selected(self)
 
@@ -187,10 +208,10 @@ class FirebaseApp(QMainWindow):
         
         for doc in docs:
             data = doc.to_dict()
-            rota = data.get('Rota', 'Campo não encontrado')
+            quantidade = data.get('Quantidade', 'Campo não encontrado')
             cidade = data.get('Local', 'Campo não encontrado')
             hora_dia = data.get('Hora_e_Dia', 'Campo não encontrado')
-            campo_valor = f"Rota: {rota}, Local: {cidade}, Data e Hora: {hora_dia}"
+            campo_valor = f"Quantidade: {quantidade}, Local: {cidade}, Data e Hora: {hora_dia}"
             self.list_widget.addItem(f"ID: {doc.id}, {campo_valor}")
 
     def documents(self):
@@ -198,33 +219,100 @@ class FirebaseApp(QMainWindow):
         self.list_widget.clear()
     
         collection_ref = db.collection('bipagem')
-        docs = collection_ref.where('Status', '==', 'aguardando').stream()
+        docs = collection_ref.stream()
         
         for doc in docs:
             data = doc.to_dict()
-            rota = data.get('Rota', 'Campo não encontrado')
+            quantidade = data.get('Quantidade', 'Campo não encontrado')
             cidade = data.get('Local', 'Campo não encontrado')
             hora_dia = data.get('Hora_e_Dia', 'Campo não encontrado')
-            campo_valor = f"Rota: {rota}, Local: {cidade}, Data e Hora: {hora_dia}"
+            campo_valor = f"Quantidade: {quantidade}, Local: {cidade}, Data e Hora: {hora_dia}"
             self.list_widget.addItem(f"ID: {doc.id}, {campo_valor}")
+            
+    def liberar(self):
+
+        selected_items = self.list_widget.selectedItems()
+        if selected_items:
+            motorista = self.combo_box_entregador.currentText()
+
+            motorista_ref = db.collection('usuarios').where('nome', '==', motorista).limit(1).stream()
+            motorista_doc = next(motorista_ref, None)
+
+            if motorista_doc:
+                motorista_uid = motorista_doc.id
+                doc_ids = [item.text().split(',')[0].split(':')[1].strip() for item in selected_items]
+
+                for doc_id in doc_ids:
+                
+                    db.collection('rota').document(motorista_uid).collection('pacotes').document(doc_id).update({
+                        'Status': "Finalizado"
+                    })
+
+
+            global tipo
+            if tipo == "Status":
+                self.remove_documents()  # Implemente sua lógica para remover documentos conforme necessário
+            else:
+                self.load_documents()  # Método para recarregar documentos na lista
+
+        else:
+            # Tratar caso nenhum item esteja selecionado
+            print("Nenhum documento selecionado para liberar.")
+    
     
     def remove_documents(self):
-        global tipo  
+        global tipo
+        query_text = self.combo_box.currentText() 
         self.list_widget.clear()
         motorista = self.combo_box_entregador.currentText()
         motorista_ref = db.collection('usuarios').where('nome', '==', motorista).limit(1).stream()
         motorista_doc = next(motorista_ref, None)
         motorista_uid = motorista_doc.id
-        collection_ref = db.collection('direcionado').document(motorista_uid).collection('pacotes')
-        docs = collection_ref.where('Status', '==', 'aguardando').stream()
-        
-        for doc in docs:
-            data = doc.to_dict()
-            rota = data.get('Rota', 'Campo não encontrado')
-            cidade = data.get('Local', 'Campo não encontrado')
-            hora_dia = data.get('Hora_e_Dia', 'Campo não encontrado')
-            campo_valor = f"Rota: {rota}, Local: {cidade}, Data e Hora: {hora_dia}"
-            self.list_widget.addItem(f"ID: {doc.id}, {campo_valor}")
+        if query_text == "Direcionado":
+            self.remover_direciona_button.setEnabled(True)
+            self.libera_button.setEnabled(False)
+            self.direciona_button.setEnabled(False)
+            collection_ref = db.collection('direcionado').document(motorista_uid).collection('pacotes')
+            docs = collection_ref.where('Status', '==', 'aguardando').stream()
+            for doc in docs:
+                data = doc.to_dict()
+                quantidade = data.get('Quantidade', 'Campo não encontrado')
+                cidade = data.get('Local', 'Campo não encontrado')
+                hora_dia = data.get('Hora_e_Dia', 'Campo não encontrado')
+                campo_valor = f"Quantidade: {quantidade}, Local: {cidade}, Data e Hora: {hora_dia}"
+                self.list_widget.addItem(f"ID: {doc.id}, {campo_valor}")
+        elif query_text == "Ocorrencia":
+            self.remover_direciona_button.setEnabled(False)
+            self.libera_button.setEnabled(True)
+            self.direciona_button.setEnabled(False)
+            collection_ref = db.collection('rota').document(motorista_uid).collection('pacotes')
+            docs = collection_ref.where('Status', '==', query_text).stream()
+            for doc in docs:
+                data = doc.to_dict()
+                ocorrencia = data.get('Ocorrencia', 'Campo não encontrado')
+                cidade = data.get('Local', 'Campo não encontrado')
+                hora_dia = data.get('Hora_e_Dia', 'Campo não encontrado')
+                campo_valor = f"Local: {cidade}, Data e Hora: {hora_dia}\nOcorrencia: "
+                campo_valor += '\n'.join(textwrap.wrap(ocorrencia, width=80))
+                self.list_widget.addItem(f"ID: {doc.id}, {campo_valor}")
+        else:
+            if query_text == "Finalizado":
+                self.remover_direciona_button.setEnabled(False)
+                self.libera_button.setEnabled(False)
+                self.direciona_button.setEnabled(False)
+            else:
+                self.remover_direciona_button.setEnabled(True)
+                self.libera_button.setEnabled(False)
+                self.direciona_button.setEnabled(False)
+            collection_ref = db.collection('rota').document(motorista_uid).collection('pacotes')
+            docs = collection_ref.where('Status', '==', query_text).stream()
+            for doc in docs:
+                data = doc.to_dict()
+                quantidade = data.get('Quantidade', 'Campo não encontrado')
+                cidade = data.get('Local', 'Campo não encontrado')
+                hora_dia = data.get('Hora_e_Dia', 'Campo não encontrado')
+                campo_valor = f"Quantidade: {quantidade}, Local: {cidade}, Data e Hora: {hora_dia}"
+                self.list_widget.addItem(f"ID: {doc.id}, {campo_valor}")
 
     def search_documents(self):
         global tipo  
@@ -238,10 +326,10 @@ class FirebaseApp(QMainWindow):
 
                 if doc.exists:
                     data = doc.to_dict()
-                    rota = data.get('Rota', 'Campo não encontrado')
+                    quantidade = data.get('Quantidade', 'Campo não encontrado')
                     cidade = data.get('Local', 'Campo não encontrado')
                     hora_dia = data.get('Hora_e_Dia', 'Campo não encontrado')
-                    campo_valor = f"Rota: {rota}, Local: {cidade}, Data e Hora: {hora_dia}"
+                    campo_valor = f"Quantidade: {quantidade}, Local: {cidade}, Data e Hora: {hora_dia}"
                     self.list_widget.addItem(f"ID: {doc.id}, {campo_valor}")
                 else:
                     print(f"Documento com ID {query_text} não encontrado.")
@@ -284,6 +372,13 @@ class FirebaseApp(QMainWindow):
             QMessageBox.warning(self, "Atenção", "Por favor, selecione pelo menos um pacote para direcionar.")
 
     def remover_direciona_pacotes(self):
+        global tipo
+        if tipo == "Status":
+            local = "rota"
+        else:
+            local = "direcionado"
+        if self.combo_box.currentText() == "Direcionado":
+            local = "direcionado"
         selected_items = self.list_widget.selectedItems()
         if selected_items:
             motorista = self.combo_box_entregador.currentText()
@@ -294,7 +389,7 @@ class FirebaseApp(QMainWindow):
                 doc_ids = [item.text().split(',')[0].split(':')[1].strip() for item in selected_items]
                 try:
                     for doc_id in doc_ids:
-                        original_doc_ref = db.collection('direcionado').document(motorista_uid).collection('pacotes').document(doc_id)
+                        original_doc_ref = db.collection(local).document(motorista_uid).collection('pacotes').document(doc_id)
                         original_doc_snapshot = original_doc_ref.get()
                         if original_doc_snapshot.exists:
                             original_doc_data = original_doc_snapshot.to_dict()
@@ -304,7 +399,6 @@ class FirebaseApp(QMainWindow):
                             original_doc_ref.delete()
 
                     QMessageBox.information(self, "Sucesso", f"Pacotes removidos com sucesso de {motorista}.")
-                    global tipo
                     if tipo == "Status":
                         self.remove_documents()
                     else:
