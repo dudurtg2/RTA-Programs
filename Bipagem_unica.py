@@ -112,7 +112,7 @@ class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
         self.currently_setting_position = None
-        self.setWindowTitle("LC-Bipagem RTA")
+        self.setWindowTitle("Bipagem RTA")
     
 
         layout = QVBoxLayout()
