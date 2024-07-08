@@ -267,7 +267,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.4.4")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.5.1")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -459,7 +459,7 @@ class MouseCoordinateApp(QWidget):
                     folder_first = self.nome_input.text().upper()
                     folder_zero = self.empresa_box.currentText().upper()
                     
-                    c.drawString(350, 750, "Empresa de serviços: " + self.empresa_box.currentText())
+                    c.drawString(390, 750, "Empresa de serviços: " + self.empresa_box.currentText())
                     c.drawString(70, 750, "Hora e Dia: " + formatted_now)
                     c.drawString(70, 735, "Funcionario: " + self.nome_input.text())
                     c.drawString(70, 720, "Entregador: " + self.entregador_input.text())
@@ -467,7 +467,18 @@ class MouseCoordinateApp(QWidget):
                     c.drawString(70, 690, "Região: " + self.base_combo_box.currentText())
                     c.drawString(70, 675, self.cidade_label.text() + " " + self.combo_box.currentText())
                     c.drawString(70, 660, "Codigo de ficha: " + formatted_code)
-                    c.drawString(70, 645, "Codigos inseridos:")
+                    c.drawString(70, 645, "Assinatura: _________________________________")
+                    c.drawString(70, 630, "Data: ___/___/_____")
+                    c.drawString(0, 600, "-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+                    c.drawString(350, 570, "Empresa de serviços: " + self.empresa_box.currentText())
+                    c.drawString(70, 570, "Hora e Dia: " + formatted_now)
+                    c.drawString(70, 555, "Funcionario: " + self.nome_input.text())
+                    c.drawString(70, 540, "Entregador: " + self.entregador_input.text())
+                    c.drawString(70, 525, self.counter_label.text())
+                    c.drawString(70, 510, "Região: " + self.base_combo_box.currentText())
+                    c.drawString(70, 495, self.cidade_label.text() + " " + self.combo_box.currentText())
+                    c.drawString(70, 480, "Codigo de ficha: " + formatted_code)
+                    c.drawString(70, 465, "Codigos inseridos:")
 
                     qr_data = formatted_code
                     qr = qrcode.QRCode( 
@@ -484,9 +495,9 @@ class MouseCoordinateApp(QWidget):
                     img.save(qr_buffer, format='PNG')
                     qr_buffer.seek(0)
 
-                    c.drawImage(ImageReader(qr_buffer), 400, 635, 100, 100) 
+                    c.drawImage(ImageReader(qr_buffer), 430, 635, 100, 100) 
 
-                    y = 620
+                    y = 440
                     for codigo in self.codigos_inseridos:
                         if y < 50:
                             c.showPage()
