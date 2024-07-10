@@ -33,7 +33,8 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QListWidget,
     QFileDialog,
-    QComboBox
+    QComboBox,
+    QMessageBox
 )
 rota_01 = [
     "IPIRA","BAIXA GRANDE","MAIRI","VARZEA DA ROÇA","ITABERABA","IAÇU","ITATIM","CASTRO ALVES","SANTA TEREZINHA","MORRO DO CHAPEU","IRECE"
@@ -54,7 +55,7 @@ rota_06 = [
     "CIPÓ","BANZAÊ","FATIMA","CICERO DANTAS","NOVA SOURE","TUCANO","RIBEIRA DO AMPARO","SITIO DO QUINTO","CORONEL JOÃO SÁ","HELIOPOLIS","RIBEIRA DO POMBAL"
 ]
 rota_07 = [
-    "SANTO ESTEVÃO","ANTONIO CARDOSO","IPECAETA","SÃO GONÇALO DOS CAMPOS", "ANGUERA", "SERRA PRETA", "RAFAEL JAMBEIRO"
+    "SANTO ESTEVÃO","ANTONIO CARDOSO","IPECAETA","SÃO GONÇALO DOS CAMPOS", "ANGUERA", "SERRA PRETA", "RAFAEL JAMBEIRO", "HUMILDES"
 ]
 
 cidades_feira = rota_01 + rota_02 + rota_03 + rota_04 + rota_05 + rota_06 + rota_07
@@ -441,6 +442,8 @@ class MouseCoordinateApp(QWidget):
                 options = QFileDialog.Options()
                 now = datetime.datetime.now()
                 formatted_code = now.strftime("RTA%Y%m%d%H%M%S%f")[:-3] + "LC"
+                self.messagem.setText(f"Salvando...")
+                self.messagem.setStyleSheet("font-weight: bold; color: blue;")
 
                 file_path, _ = QFileDialog.getSaveFileName(
                     self,
@@ -449,7 +452,6 @@ class MouseCoordinateApp(QWidget):
                     "PDF Files (*.pdf);;All Files (*)",
                     options=options,
                 )
-
                 if file_path:
                     c = canvas.Canvas(file_path, pagesize=letter)
                     now = datetime.datetime.now()
@@ -469,16 +471,7 @@ class MouseCoordinateApp(QWidget):
                     c.drawString(70, 660, "Codigo de ficha: " + formatted_code)
                     c.drawString(70, 645, "Assinatura: _________________________________")
                     c.drawString(70, 630, "Data: ___/___/_____")
-                    c.drawString(0, 600, "-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
-                    c.drawString(350, 570, "Empresa de serviços: " + self.empresa_box.currentText())
-                    c.drawString(70, 570, "Hora e Dia: " + formatted_now)
-                    c.drawString(70, 555, "Funcionario: " + self.nome_input.text())
-                    c.drawString(70, 540, "Entregador: " + self.entregador_input.text())
-                    c.drawString(70, 525, self.counter_label.text())
-                    c.drawString(70, 510, "Região: " + self.base_combo_box.currentText())
-                    c.drawString(70, 495, self.cidade_label.text() + " " + self.combo_box.currentText())
-                    c.drawString(70, 480, "Codigo de ficha: " + formatted_code)
-                    c.drawString(70, 465, "Codigos inseridos:")
+                    c.drawString(70, 615, "Codigos inseridos:")
 
                     qr_data = formatted_code
                     qr = qrcode.QRCode( 
@@ -497,7 +490,7 @@ class MouseCoordinateApp(QWidget):
 
                     c.drawImage(ImageReader(qr_buffer), 430, 635, 100, 100) 
 
-                    y = 440
+                    y = 600
                     for codigo in self.codigos_inseridos:
                         if y < 50:
                             c.showPage()
@@ -586,7 +579,7 @@ class MouseCoordinateApp(QWidget):
                         drive_service.permissions().create(fileId=file_id, body=permission).execute()
                         public_url = f"https://drive.google.com/uc?id={file_id}&export=download"
                     except Exception as e:
-                        self.messagem.setText(f"Erro ao enviar arquivo para o Google Drive: {e}")
+                        self.messagem.setText(f"Erro ao enviar arquivo para o Google Drive:\n {e}")
                         self.messagem.setStyleSheet("font-weight: bold; color: red;")
                         return
 
@@ -614,8 +607,14 @@ class MouseCoordinateApp(QWidget):
                         self.messagem.setText(f"Erro ao salvar dados no Firestore: {e}")
                         self.messagem.setStyleSheet("font-weight: bold; color: red;")
                         return
-
+                    QMessageBox.information(self, "Sucesso", f"Romanio salvo com sucesso.")
+                    self.messagem.setText(f"Insira o proximo entregador e realize as bipagems!")
+                    self.messagem.setStyleSheet("font-weight: bold; color: blue;")
                     self.resetar_lista()
+                else:
+                    self.messagem.setText(f"Prossiga com a bipagem normalmente.")
+                    self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+            
             else:
                 self.messagem.setText("Por favor, defina nome e entregador \nantes de exportar.")
                 self.messagem.setStyleSheet("font-weight: bold; color: red;")
@@ -625,6 +624,7 @@ class MouseCoordinateApp(QWidget):
   
     def resetar_lista(self):
         self.codigos_inseridos.clear()
+        self.entregador_input.clear()
         if os.path.exists("codigos_inseridos.txt"): os.remove("codigos_inseridos.txt")
         self.update_codigos_list_widget()
 
