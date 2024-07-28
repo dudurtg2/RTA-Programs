@@ -34,10 +34,14 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QFileDialog,
     QComboBox,
-    QMessageBox
+    QMessageBox,
+    QCheckBox,
+    QDialogButtonBox,
+    QDialog,
+    QScrollArea
 )
 rota_01 = [
-    "IPIRA","BAIXA GRANDE","MAIRI","VARZEA DA ROÇA","ITABERABA","IAÇU","ITATIM","CASTRO ALVES","SANTA TEREZINHA","MORRO DO CHAPEU","IRECE"
+    "IPIRA","BAIXA GRANDE","MAIRI","VARZEA DA ROÇA","ITABERABA","IAÇU","ITATIM","CASTRO ALVES","SANTA TEREZINHA","MORRO DO CHAPEU","IRECE", "MILAGRES"
 ]
 rota_02 = [
     "AMELIA RODRIGUES","CONCEIÇÃO DO JACUIPE","CORAÇÃO DE MARIA","TEODORO SAMPAIO","IRARA","SANTANOPOLIS","SANTA BARBARA","LAMARÃO ","AGUA FRIA"
@@ -52,7 +56,9 @@ rota_05 = [
     "VALENTE","RETIROLANDIA","SANTA LUZ","CANSANÇÃO","QUEIMADAS","SÃO DOMINGOS","NOVA FATIMA"
 ]
 rota_06 = [
-    "CIPÓ","BANZAÊ","FATIMA","CICERO DANTAS","NOVA SOURE","TUCANO","RIBEIRA DO AMPARO","SITIO DO QUINTO","CORONEL JOÃO SÁ","HELIOPOLIS","RIBEIRA DO POMBAL"
+    "CIPÓ","BANZAÊ","FATIMA","CICERO DANTAS","NOVA SOURE","TUCANO","RIBEIRA DO AMPARO","SITIO DO QUINTO","CORONEL JOÃO SÁ","HELIOPOLIS","RIBEIRA DO POMBAL",
+    "ADUSTINA","ANTAS","ITIÚBA","JEREMOABO","MONTE SANTO","NORDESTINA","NOVO TRIUNFO","PARIPIRANGA","PEDRO ALEXANDRE","QUIJINGUE","SANTA BRÍGIDA"
+    
 ]
 rota_07 = [
     "SANTO ESTEVÃO","ANTONIO CARDOSO","IPECAETA","SÃO GONÇALO DOS CAMPOS", "ANGUERA", "SERRA PRETA", "RAFAEL JAMBEIRO", "HUMILDES"
@@ -109,9 +115,63 @@ cidades_jacobina = [
 
 rota = "002"
 
+cidades = cidades_feira
+
+class MultiSelectDialog(QDialog):
+    def __init__(self, items):
+        super().__init__()
+        self.setWindowTitle('Seleção Múltipla')
+
+        self.layout = QVBoxLayout()
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+
+        self.scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(self.scroll_content)
+        self.scroll_area.setWidget(self.scroll_content)
+
+        self.checkboxes = []
+        for item in items:
+            checkbox = QCheckBox(item)
+            self.checkboxes.append(checkbox)
+            self.scroll_layout.addWidget(checkbox)
+
+        self.layout.addWidget(self.scroll_area)
+
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        self.layout.addWidget(self.buttonBox)
+
+        self.setLayout(self.layout)
+
+    def get_selected_items(self):
+        return [cb.text() for cb in self.checkboxes if cb.isChecked()]
+
+class ComboBoxWithDialog(QWidget):
+    def __init__(self, items, parent=None):
+        super().__init__(parent)
+        self.items = items
+        
+        self.layout = QHBoxLayout()
+        self.button = QPushButton('Click aqui para selecionar as cidades')
+        self.button.setStyleSheet("font-weight: bold; color: blue;")
+        self.button.clicked.connect(self.open_multi_select_dialog)
+        self.layout.addWidget(self.button)
+        self.setLayout(self.layout)
+        
+        self.selected_items = []
+
+    def open_multi_select_dialog(self):
+        dialog = MultiSelectDialog(self.items)
+        if dialog.exec():
+            self.selected_items = dialog.get_selected_items()
+            self.button.setText(', '.join(self.selected_items))
+
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
+        global cidades
         self.currently_setting_position = None
         self.setWindowTitle("Bipagem RTA")
     
@@ -155,12 +215,9 @@ class MouseCoordinateApp(QWidget):
         
         self.layout_cidade = QHBoxLayout()
         self.cidade_label = QLabel("Cidade:")
-        self.layout_cidade.addWidget(self.cidade_label)
-        self.combo_box = QComboBox()
-        self.combo_box.addItems(sorted(cidades_feira))
+        self.combo_box = ComboBoxWithDialog(sorted(cidades))
         self.layout_cidade.addWidget(self.combo_box)
         layout.addLayout(self.layout_cidade)
-        self.combo_box.currentIndexChanged.connect(self.on_cidade_selected)
 
         self.label = QLabel("Clique nos botões para definir a posição do mouse:")
         self.label.setStyleSheet("font-weight: bold;")
@@ -268,7 +325,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.5.1")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.6.9")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -291,7 +348,7 @@ class MouseCoordinateApp(QWidget):
         
     def on_cidade_selected(self, index):
         global rota
-        selected_cidade = self.combo_box.currentText()
+        selected_cidade = self.combo_box.button.text().upper()
         if selected_cidade in rota_01:
             rota = "001"
         elif selected_cidade in rota_02:
@@ -311,7 +368,6 @@ class MouseCoordinateApp(QWidget):
         else:
             rota = "base"
             
-    
     def on_base_selected(self, index):
         base_selecionada = self.base_combo_box.currentText()
         if base_selecionada == "ALAGOINHAS":
@@ -337,8 +393,9 @@ class MouseCoordinateApp(QWidget):
             self.cidade_label.setText("Bairros:")
         self.on_cidade_selected(self)
     def atualizar_cidades(self, lista_cidades):
-        self.combo_box.clear()
-        self.combo_box.addItems(lista_cidades)
+        global cidades
+        cidades = lista_cidades
+        self.combo_box.items = lista_cidades
         
     def start_set_position1(self):
         self.messagem.setText("Posicione o mouse e pressione Enter.")
@@ -457,21 +514,30 @@ class MouseCoordinateApp(QWidget):
                     now = datetime.datetime.now()
                     formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
                     folder_date = now.strftime("%d-%m-%Y")
-                    folder_name = self.combo_box.currentText()
+                    folder_name = self.combo_box.button.text().upper()
                     folder_first = self.nome_input.text().upper()
                     folder_zero = self.empresa_box.currentText().upper()
                     
+                    default_font_size = 12
+                    signature_font_size = 16
+                    
                     c.drawString(390, 750, "Empresa de serviços: " + self.empresa_box.currentText())
-                    c.drawString(70, 750, "Hora e Dia: " + formatted_now)
+                    c.drawString(70, 750, "Codigo de ficha: " + formatted_code)
                     c.drawString(70, 735, "Funcionario: " + self.nome_input.text())
                     c.drawString(70, 720, "Entregador: " + self.entregador_input.text())
                     c.drawString(70, 705, self.counter_label.text())
-                    c.drawString(70, 690, "Região: " + self.base_combo_box.currentText())
-                    c.drawString(70, 675, self.cidade_label.text() + " " + self.combo_box.currentText())
-                    c.drawString(70, 660, "Codigo de ficha: " + formatted_code)
-                    c.drawString(70, 645, "Assinatura: _________________________________")
-                    c.drawString(70, 630, "Data: ___/___/_____")
-                    c.drawString(70, 615, "Codigos inseridos:")
+                    c.drawString(70, 690, "Dia e hora da bipagem: " + formatted_now)
+                    c.drawString(70, 675, "Região: " + self.base_combo_box.currentText())
+                    c.drawString(70, 660, "Data: ___/___/_____")
+                    
+                    c.setFont("Helvetica", signature_font_size)
+                    
+                    c.drawString(70, 640, "Assinatura: _________________________________")
+
+                    c.setFont("Helvetica", default_font_size)
+                    
+                    c.drawString(70, 620, self.cidade_label.text() + " " + self.combo_box.button.text().upper())
+                    c.drawString(70, 605, "Codigos inseridos:")
 
                     qr_data = formatted_code
                     qr = qrcode.QRCode( 
@@ -488,9 +554,9 @@ class MouseCoordinateApp(QWidget):
                     img.save(qr_buffer, format='PNG')
                     qr_buffer.seek(0)
 
-                    c.drawImage(ImageReader(qr_buffer), 430, 635, 100, 100) 
+                    c.drawImage(ImageReader(qr_buffer), 430, 645, 100, 100) 
 
-                    y = 600
+                    y = 590
                     for codigo in self.codigos_inseridos:
                         if y < 50:
                             c.showPage()
@@ -589,7 +655,7 @@ class MouseCoordinateApp(QWidget):
                                 'Empresa': self.empresa_box.currentText(),
                                 'Funcionario': self.nome_input.text(),
                                 'Entregador': self.entregador_input.text(),
-                                'Local': self.combo_box.currentText(),
+                                'Local': self.combo_box.button.text().upper(),
                                 'Codigo_de_ficha': formatted_code,
                                 'Hora_e_Dia': formatted_now,
                                 'Quantidade': self.counter_label.text(),
