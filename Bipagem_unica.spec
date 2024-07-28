@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['C:\\Users\\dudur\\Documents\\LC-transporte\\Bipagem_unica.py'],
+    ['F:\\rta_system\\Bipagem_unica.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -32,7 +32,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['C:\\Users\\dudur\\Documents\\LC-transporte\\Pacotes.ico'],
+    icon=['F:\\rta_system\\Pacotes.ico'],
 )
 coll = COLLECT(
     exe,

@@ -1,4 +1,4 @@
-('C:\\Users\\dudur\\Documents\\LC-transporte\\build\\Bipagem_unica\\PYZ-00.pyz',
+('F:\\rta_system\\build\\Bipagem_unica\\PYZ-00.pyz',
  [('PIL',
    'C:\\Users\\dudur\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\PIL\\__init__.py',
    'PYMODULE'),
