@@ -57,7 +57,7 @@ rota_05 = [
 ]
 rota_06 = [
     "CIPÓ","BANZAÊ","FATIMA","CICERO DANTAS","NOVA SOURE","TUCANO","RIBEIRA DO AMPARO","SITIO DO QUINTO","CORONEL JOÃO SÁ","HELIOPOLIS","RIBEIRA DO POMBAL",
-    "ADUSTINA","ANTAS","ITIÚBA","JEREMOABO","MONTE SANTO","NORDESTINA","NOVO TRIUNFO","PARIPIRANGA","PEDRO ALEXANDRE","QUIJINGUE","SANTA BRÍGIDA"
+    "ADUSTINA","ANTAS","ITIÚBA","JEREMOABO","MONTE SANTO","NORDESTINA","NOVO TRIUNFO","PARIPIRANGA","PEDRO ALEXANDRE","QUIJINGUE","SANTA BRÍGIDA", "EUCLIDES DA CUNHA"
     
 ]
 rota_07 = [
@@ -120,31 +120,43 @@ cidades = cidades_feira
 class MultiSelectDialog(QDialog):
     def __init__(self, items):
         super().__init__()
-        self.setWindowTitle('Seleção Múltipla')
+        self.setWindowTitle('Local')
 
         self.layout = QVBoxLayout()
+        self.search_box = QLineEdit()
+        self.search_box.setPlaceholderText('Pesquisar...')
+        self.search_box.textChanged.connect(self.filter_items)
+        self.layout.addWidget(self.search_box)
+
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-
+        
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_area.setWidget(self.scroll_content)
-
+        
         self.checkboxes = []
+        self.all_items = items 
+        
         for item in items:
             checkbox = QCheckBox(item)
             self.checkboxes.append(checkbox)
             self.scroll_layout.addWidget(checkbox)
-
+        
         self.layout.addWidget(self.scroll_area)
-
+        
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
         self.layout.addWidget(self.buttonBox)
-
+        
         self.setLayout(self.layout)
-
+    
+    def filter_items(self):
+        filter_text = self.search_box.text().lower()
+        for checkbox in self.checkboxes:
+            checkbox.setVisible(filter_text in checkbox.text().lower())
+    
     def get_selected_items(self):
         return [cb.text() for cb in self.checkboxes if cb.isChecked()]
 
@@ -166,7 +178,10 @@ class ComboBoxWithDialog(QWidget):
         dialog = MultiSelectDialog(self.items)
         if dialog.exec():
             self.selected_items = dialog.get_selected_items()
-            self.button.setText(', '.join(self.selected_items))
+            if not self.selected_items:  # Verifica se a lista de itens selecionados está vazia
+                self.button.setText('Click aqui para selecionar as cidades')
+            else:
+                self.button.setText(', '.join(self.selected_items))
 
 class MouseCoordinateApp(QWidget):
     def __init__(self):
@@ -649,30 +664,30 @@ class MouseCoordinateApp(QWidget):
                         self.messagem.setStyleSheet("font-weight: bold; color: red;")
                         return
 
-                    try:
-                        if rota != "base":
-                            db.collection('bipagem').document(formatted_code).set({
-                                'Empresa': self.empresa_box.currentText(),
-                                'Funcionario': self.nome_input.text(),
-                                'Entregador': self.entregador_input.text(),
-                                'Local': self.combo_box.button.text().upper(),
-                                'Codigo_de_ficha': formatted_code,
-                                'Hora_e_Dia': formatted_now,
-                                'Quantidade': self.counter_label.text(),
-                                'Inicio': "aguardando",
-                                'Fim': "aguardando",
-                                'Status': "aguardando",
-                                'Motorista': "aguardando",
-                                'Codigos inseridos': self.codigos_inseridos,
-                                'Rota': rota,
-                                'Download_link': public_url
-                            })
-                        else:
-                            pass
-                    except Exception as e:
-                        self.messagem.setText(f"Erro ao salvar dados no Firestore: {e}")
-                        self.messagem.setStyleSheet("font-weight: bold; color: red;")
-                        return
+                    ##try:
+                    ##    if rota != "base":
+                    ##        db.collection('bipagem').document(formatted_code).set({
+                    ##            'Empresa': self.empresa_box.currentText(),
+                    ##            'Funcionario': self.nome_input.text(),
+                    ##            'Entregador': self.entregador_input.text(),
+                    ##            'Local': self.combo_box.button.text().upper(),
+                    ##            'Codigo_de_ficha': formatted_code,
+                    ##            'Hora_e_Dia': formatted_now,
+                    ##            'Quantidade': self.counter_label.text(),
+                    ##            'Inicio': "aguardando",
+                    ##            'Fim': "aguardando",
+                    ##            'Status': "aguardando",
+                    ##            'Motorista': "aguardando",
+                    ##            'Codigos inseridos': self.codigos_inseridos,
+                    ##            'Rota': rota,
+                    ##            'Download_link': public_url
+                    ##        })
+                    ##    else:
+                    ##        pass
+                    ##except Exception as e:
+                    ##    self.messagem.setText(f"Erro ao salvar dados no Firestore: {e}")
+                    ##    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                    ##    return
                     QMessageBox.information(self, "Sucesso", f"Romanio salvo com sucesso.")
                     self.messagem.setText(f"Insira o proximo entregador e realize as bipagems!")
                     self.messagem.setStyleSheet("font-weight: bold; color: blue;")
