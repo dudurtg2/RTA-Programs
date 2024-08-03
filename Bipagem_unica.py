@@ -41,7 +41,7 @@ from PyQt5.QtWidgets import (
     QScrollArea
 )
 rota_01 = [
-    "IPIRA","BAIXA GRANDE","MAIRI","VARZEA DA ROÇA","ITABERABA","IAÇU","ITATIM","CASTRO ALVES","SANTA TEREZINHA","MORRO DO CHAPEU","IRECE", "MILAGRES"
+    "IPIRA","BAIXA GRANDE","MAIRI","VARZEA DA ROÇA","ITABERABA","IAÇU","ITATIM","CASTRO ALVES","SANTA TEREZINHA","MORRO DO CHAPEU","IRECE", "MILAGRES","JADLOG-LUIZ"
 ]
 rota_02 = [
     "AMELIA RODRIGUES","CONCEIÇÃO DO JACUIPE","CORAÇÃO DE MARIA","TEODORO SAMPAIO","IRARA","SANTANOPOLIS","SANTA BARBARA","LAMARÃO ","AGUA FRIA"
@@ -78,16 +78,32 @@ barrios_feria = [
     "SANTO ANTÔNIO DOS PRAZERES","SÃO JOÃO","SIM","SÍTIO MATIAS","SOBRADINHO",
     "SUBAÉ","TOMBA"
 ]
-
+barrios_alagoinhas =[
+    "ALAGOINHAS VELHA","BARREIRO","CATU","CENTRO","DOIS DE JULHO","JARDIM PEDRO BRAGA",
+    "JARDIM PETROLAR","JURACY MAGALHÃES","KENNEDY","MANGALÔ","PARQUE VITÓRIA",
+    "SANTA ISABEL","SANTA TEREZINHA","SILVA JARDIM","TERESÓPOLIS","BOA UNIÃO","BORGES",
+    "BURI","CALU","CAMBOATÁ DE FORA","CANGULA","CONCEIÇÃO DE BAIXO","CONCEIÇÃO DE CIMA",
+    "ENCANTADO","ESTEVÃO","FAZENDA GAMELEIRA","LIMOEIRO","MACAQUINHO","MANGUEIRAS",
+    "MILAGRES","NARANDIBA","OUTEIRO","PAPAGAIO","PEDRA DE BAIXO","PEDRA DE CIMA",
+    "PONTO DO BEIJU","PORTAO","QUINZAMBU","RIACHO DA GUIA","RIACHO DO MEL","RIO BRANCO",
+    "SAUIPE","SUCUPIRA I","SUCUPIRA II","TOMBADOR","TUCUM"
+]
+barrios_saj = [
+    "AMPARO","ANDAIÁ","ALTO SANTO ANTÔNIO","ALTO SOBRADINHO","BAIRRO DO SÃO BENEDITO",
+    "CAJUEIRO","CENTRO","CIDADE NOVA II","COCÃO","LOTEAMENTO SANTA CECÍLIA",
+    "LOTEAMENTO SALES","MARIA PRETA","MIRANTE DO ANDAIÁ","MUTUM","PROVIDÊNCIA",
+    "RÁDIO CLUBE","SALGADEIRA","SANTA MADALENA","SÃO FRANCISCO","SÃO PAULO",
+    "URBIS I","URBIS II","URBIS III","ZILDA ARNS"
+]
 empresa = [
     "LOGGI", "JADLOG", "SHOPEE", "ANJUN", "SEQUOIA"
 ]
 base = [
-    "FEIRA DE SANTANA", "BAIRROS DE FEIRA DE SANTANA", "ALAGOINHAS",
-    "JACOBINA", "SANTO ANTONIO DE JESUS", "TRANSFERENCIA", "DEVOLUÇÃO" 
+    "FEIRA DE SANTANA", "BAIRROS DE FEIRA DE SANTANA", "ALAGOINHAS", "BAIRROS DE ALAGOINHAS",
+    "JACOBINA", "SANTO ANTONIO DE JESUS", "BAIRROS DE S. A. DE JESUS", "TRANSFERENCIA", "DEVOLUÇÃO" 
 ]
 tranferencia = [
-    "TRANSFERENCIA PARA FEIRA", "TRANSFERENCIA PARA ALAGOINHAS", "TRANSFERENCIA PARA JACOBINA", "TRANSFERENCIA PARA SANTO ANTONIO DE JESUS"
+    "TRANSFERENCIA PARA FEIRA", "TRANSFERENCIA PARA ALAGOINHAS", "TRANSFERENCIA PARA JACOBINA", "TRANSFERENCIA PARA SANTO ANTONIO DE JESUS", "TRATATIVA"
 ]
 devolucaos = [
     "DEVOLUÇÃO PARA LOGGI", "DEVOLUÇÃO PARA FEIRA", "DEVOLUÇÃO PARA JADLOG", 
@@ -113,7 +129,13 @@ cidades_jacobina = [
     "VÁRZEA NOVA","JACOBINA"
 ]
 
-rota = "002"
+rota_dict = {city: '001' for city in rota_01}
+rota_dict.update({city: '002' for city in rota_02})
+rota_dict.update({city: '003' for city in rota_03})
+rota_dict.update({city: '004' for city in rota_04})
+rota_dict.update({city: '005' for city in rota_05})
+rota_dict.update({city: '006' for city in rota_06})
+rota_dict.update({city: '008' for city in tranferencia})
 
 cidades = cidades_feira
 
@@ -166,7 +188,7 @@ class ComboBoxWithDialog(QWidget):
         self.items = items
         
         self.layout = QHBoxLayout()
-        self.button = QPushButton('Click aqui para selecionar as cidades')
+        self.button = QPushButton('Click aqui para selecionar o local')
         self.button.setStyleSheet("font-weight: bold; color: blue;")
         self.button.clicked.connect(self.open_multi_select_dialog)
         self.layout.addWidget(self.button)
@@ -178,10 +200,17 @@ class ComboBoxWithDialog(QWidget):
         dialog = MultiSelectDialog(self.items)
         if dialog.exec():
             self.selected_items = dialog.get_selected_items()
-            if not self.selected_items:  # Verifica se a lista de itens selecionados está vazia
-                self.button.setText('Click aqui para selecionar as cidades')
+            if not self.selected_items:  
+                self.button.setText('Click aqui para selecionar o local')
             else:
-                self.button.setText(', '.join(self.selected_items))
+                self.button.setText(', '.join(self.selected_items))                
+        global rota
+        if self.selected_items:
+            selected_cidade = self.selected_items[0].upper() 
+            rota = rota_dict.get(selected_cidade, 'base')
+        else:
+            rota = 'base'
+
 
 class MouseCoordinateApp(QWidget):
     def __init__(self):
@@ -270,17 +299,17 @@ class MouseCoordinateApp(QWidget):
         tempo_layout_base = QHBoxLayout()
         layout.addLayout(tempo_layout_base)
 
-        self.label_tempo_base = QLabel("Colagem na posicão 1:")
-        tempo_layout_base.addWidget(self.label_tempo_base)
-        self.tempo_base_spinbox = QSpinBox()
-        self.tempo_base_spinbox.setRange(0, 5)
-        tempo_layout_base.addWidget(self.tempo_base_spinbox)
+        self.label_tempOne = QLabel("Colagem na posicão 1:")
+        tempo_layout_base.addWidget(self.label_tempOne)
+        self.tempOne_spinbox = QSpinBox()
+        self.tempOne_spinbox.setRange(0, 5)
+        tempo_layout_base.addWidget(self.tempOne_spinbox)
 
-        self.label_tempo_entregador = QLabel("e posicão 2:")
-        tempo_layout_base.addWidget(self.label_tempo_entregador)
-        self.tempo_entregador_spinbox = QSpinBox()
-        self.tempo_entregador_spinbox.setRange(0, 5)
-        tempo_layout_base.addWidget(self.tempo_entregador_spinbox)
+        self.label_tempTwo = QLabel("e posicão 2:")
+        tempo_layout_base.addWidget(self.label_tempTwo)
+        self.tempTwo_spinbox = QSpinBox()
+        self.tempTwo_spinbox.setRange(0, 5)
+        tempo_layout_base.addWidget(self.tempTwo_spinbox)
 
         self.label = QLabel("Clique no campo abaixo para inserir os códigos:")
         self.label.setStyleSheet("font-weight: bold;")
@@ -298,13 +327,13 @@ class MouseCoordinateApp(QWidget):
         
         self.delete_button = QPushButton("Delete selecionado")
         self.delete_button.setStyleSheet("color: red;")
-        self.delete_button.clicked.connect(self.deletar_codigo)
+        self.delete_button.clicked.connect(self.DeleteBarCode)
         
         self.layout_search_label = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Digite o codigo para buscar na lista")
         self.layout_search_label.addWidget(self.search_input)
-        self.search_input.textChanged.connect(self.filtrar_codigos)
+        self.search_input.textChanged.connect(self.FilterBarCodes)
         
         editList.addLayout(self.layout_search_label)
         editList.addWidget(self.delete_button)
@@ -312,18 +341,18 @@ class MouseCoordinateApp(QWidget):
         self.codigos_list_widget = QListWidget()
         layout.addWidget(self.codigos_list_widget)
 
-        self.adicionar_codigo_input = QLineEdit()
-        self.adicionar_codigo_input.setPlaceholderText("Insira aqui manualmente o código de barras")
-        layout.addWidget(self.adicionar_codigo_input)
+        self.AddBarCode_input = QLineEdit()
+        self.AddBarCode_input.setPlaceholderText("Insira aqui manualmente o código de barras")
+        layout.addWidget(self.AddBarCode_input)
 
         self.button = QHBoxLayout()
         self.export_button = QPushButton("Exportar Lista")
         self.button.addWidget(self.export_button)
-        self.export_button.clicked.connect(self.exportar_lista)
+        self.export_button.clicked.connect(self.ExportList)
 
         self.reset_list_button = QPushButton("Resetar Lista")
         self.button.addWidget(self.reset_list_button)
-        self.reset_list_button.clicked.connect(self.resetar_lista)
+        self.reset_list_button.clicked.connect(self.ResetList)
 
         layout.addLayout(self.button)
         
@@ -340,7 +369,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.6.10")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.7.7")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -348,41 +377,20 @@ class MouseCoordinateApp(QWidget):
 
         self.setLayout(layout)
         
-        self.tempo_entregador_spinbox.setValue(1)
-        self.tempo_base_spinbox.setValue(2)
+        self.tempTwo_spinbox.setValue(1)
+        self.tempOne_spinbox.setValue(2)
         self.tempo2_spinbox.setValue(800)
         self.tempo1_spinbox.setValue(150)
         self.sound_temp.setValue(250)
         self.sound_imput.setValue(3520)
         self.positions = {}
         self.counter = 0
-        self.adicionar_codigo_input.returnPressed.connect(self.adicionar_codigo)
-        self.entry.returnPressed.connect(self.start_inserir_codigo)
-        self.codigos_inseridos = self.carregar_codigos_inseridos()
-        self.update_codigos_list_widget()
+        self.AddBarCode_input.returnPressed.connect(self.AddBarCode)
+        self.entry.returnPressed.connect(self.StartInsertBarCode)
+        self.insertedBarCodes = self.carregar_insertedBarCodes()
+        self.UpdateBarCodeListWidget()
         
-    def on_cidade_selected(self, index):
-        global rota
-        selected_cidade = self.combo_box.button.text().upper()
-        if selected_cidade in rota_01:
-            rota = "001"
-        elif selected_cidade in rota_02:
-            rota = "002"
-        elif selected_cidade in rota_03:
-            rota = "003"
-        elif selected_cidade in rota_04:
-            rota = "004"
-        elif selected_cidade in rota_05:
-            rota = "005"
-        elif selected_cidade in tranferencia:
-            rota = "008"
-        elif selected_cidade in rota_06 or selected_cidade in rota_07:
-            rota = "base"
-        elif selected_cidade in cidades_algoinhas or selected_cidade in cidades_jacobina or selected_cidade in cidades_saj:
-            rota = "base"
-        else:
-            rota = "base"
-            
+    
     def on_base_selected(self, index):
         base_selecionada = self.base_combo_box.currentText()
         if base_selecionada == "ALAGOINHAS":
@@ -406,7 +414,12 @@ class MouseCoordinateApp(QWidget):
         elif base_selecionada == "BAIRROS DE FEIRA DE SANTANA":
             self.atualizar_cidades(sorted(barrios_feria))
             self.cidade_label.setText("Bairros:")
-        self.on_cidade_selected(self)
+        elif base_selecionada == "BAIRROS DE ALAGOINHAS":
+            self.atualizar_cidades(sorted(barrios_alagoinhas))
+            self.cidade_label.setText("Bairros:")
+        elif base_selecionada == "BAIRROS DE S. A. DE JESUS":
+            self.atualizar_cidades(sorted(barrios_saj))
+            self.cidade_label.setText("Bairros:")   
     def atualizar_cidades(self, lista_cidades):
         global cidades
         cidades = lista_cidades
@@ -447,39 +460,39 @@ class MouseCoordinateApp(QWidget):
         self.button2.setText(f"Posição 2: ({x}, {y})")
         self.button2.setStyleSheet("font-weight: bold; color: blue;")
         
-    def carregar_codigos_inseridos(self):
-        codigos_inseridos = set()
-        if os.path.exists("codigos_inseridos.txt"):
-            with open("codigos_inseridos.txt", "r") as file:
+    def carregar_insertedBarCodes(self):
+        insertedBarCodes = set()
+        if os.path.exists("insertedBarCodes.txt"):
+            with open("insertedBarCodes.txt", "r") as file:
                 for linha in file:
                     linha = linha.strip()
-                    if linha: codigos_inseridos.add(linha)
-        return codigos_inseridos
+                    if linha: insertedBarCodes.add(linha)
+        return insertedBarCodes
 
-    def salvar_codigo(self, codigo):
-        with open("codigos_inseridos.txt", "a") as file:
+    def SaveBarCode(self, codigo):
+        with open("insertedBarCodes.txt", "a") as file:
             if not file.tell(): file.write("\n")
             file.write(f"{codigo}\n")
 
-    def update_codigos_list_widget(self):
+    def UpdateBarCodeListWidget(self):
         self.codigos_list_widget.clear()
-        self.codigos_list_widget.addItems(self.codigos_inseridos)
-        if self.codigos_inseridos: self.counter = len(self.codigos_inseridos)
+        self.codigos_list_widget.addItems(self.insertedBarCodes)
+        if self.insertedBarCodes: self.counter = len(self.insertedBarCodes)
         else: self.counter = 0
         self.counter_label.setText(f"Quantidade: {self.counter}")
 
     def sound_success(self): 
         winsound.Beep(int(self.sound_imput.value()) , int(self.sound_temp.value()))
         
-    def start_inserir_codigo(self):
+    def StartInsertBarCode(self):
         if ( "pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != ""):
-            codigo_barras = self.entry.text()
-            if len(codigo_barras) < 1:
+            barCode = self.entry.text()
+            if len(barCode) < 1:
                 self.messagem.setText( "Código de barras inválido. \nInsira um código com pelo menos 1 caractere." )
                 self.messagem.setStyleSheet("font-weight: bold; color: red;")
                 return
             
-            if codigo_barras in self.codigos_inseridos:
+            if barCode in self.insertedBarCodes:
                 self.entry.clear()
                 self.bring_to_front()
                 winsound.Beep(820, 1000)
@@ -487,10 +500,10 @@ class MouseCoordinateApp(QWidget):
                 self.messagem.setStyleSheet("font-weight: bold; color: red;")
                 return
 
-            self.codigos_inseridos.add(codigo_barras)
-            self.salvar_codigo(codigo_barras)
+            self.insertedBarCodes.add(barCode)
+            self.SaveBarCode(barCode)
             
-            inserir_codigo(codigo_barras, *self.positions["pos1"], *self.positions["pos2"], self.tempo1_spinbox.value() / 1000, self.tempo2_spinbox.value() / 1000, self.tempo_entregador_spinbox.value(), self.tempo_base_spinbox.value())
+            InsertBarCode(barCode, *self.positions["pos1"], *self.positions["pos2"], self.tempo1_spinbox.value() / 1000, self.tempo2_spinbox.value() / 1000, self.tempTwo_spinbox.value(), self.tempOne_spinbox.value())
             
             self.messagem.setText(f"Codigo de barras inserido com sucesso.")
             self.messagem.setStyleSheet("font-weight: bold; color: blue;")
@@ -498,7 +511,7 @@ class MouseCoordinateApp(QWidget):
             self.entry.clear()
             self.sound_success()
             self.bring_to_front()
-            self.update_codigos_list_widget() 
+            self.UpdateBarCodeListWidget() 
         else: 
             self.messagem.setText( "Por favor, defina todas as posições, nome e \nentregador antes de iniciar." )
             self.messagem.setStyleSheet("font-weight: bold; color: red;")
@@ -507,10 +520,14 @@ class MouseCoordinateApp(QWidget):
         window = gw.getWindowsWithTitle(self.windowTitle())[0]
         if window: window.activate()
             
-    def exportar_lista(self):
+    def ExportList(self):
         global rota
         try:
             if (self.nome_input.text() != "" and self.entregador_input.text() != ""):
+                if(self.combo_box.button.text() == "Click aqui para selecionar o local"):
+                    self.messagem.setText(f"Selecione o local de destino.")
+                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                    return
                 options = QFileDialog.Options()
                 now = datetime.datetime.now()
                 formatted_code = now.strftime("RTA%Y%m%d%H%M%S%f")[:-3] + "LC"
@@ -546,14 +563,16 @@ class MouseCoordinateApp(QWidget):
                     c.drawString(70, 660, "Data: ___/___/_____")
                     
                     c.setFont("Helvetica", signature_font_size)
-                    
                     c.drawString(70, 640, "Assinatura: _________________________________")
-
+                    c.setFont("Helvetica", default_font_size)
+            
+                    c.drawString(70, 620, self.cidade_label.text() + " " + self.combo_box.button.text().upper())
+                    
+                    c.setFont("Helvetica", signature_font_size)
+                    c.drawString(300, 600, "Caixas: ______    Sacas: ______")
+                    c.drawString(70, 600, "Codigos inseridos:")
                     c.setFont("Helvetica", default_font_size)
                     
-                    c.drawString(70, 620, self.cidade_label.text() + " " + self.combo_box.button.text().upper())
-                    c.drawString(70, 605, "Codigos inseridos:")
-
                     qr_data = formatted_code
                     qr = qrcode.QRCode( 
                         version=1,
@@ -571,8 +590,8 @@ class MouseCoordinateApp(QWidget):
 
                     c.drawImage(ImageReader(qr_buffer), 430, 645, 100, 100) 
 
-                    y = 590
-                    for codigo in self.codigos_inseridos:
+                    y = 585
+                    for codigo in self.insertedBarCodes:
                         if y < 50:
                             c.showPage()
                             y = 750
@@ -585,7 +604,6 @@ class MouseCoordinateApp(QWidget):
                         with open('service-account-credentials.json') as json_file:
                             data = json.load(json_file)
                             service_account_info = data['google_service_account']
-                            mysql_info = data['mysql']
                             firebase_credentials = data['firebase']
                     except Exception as e:
                         self.messagem.setText(f"Erro ao carregar credenciais: {e}")
@@ -648,10 +666,8 @@ class MouseCoordinateApp(QWidget):
                         }
                         media = MediaFileUpload(file_path, mimetype="application/pdf")
                         uploaded_file = drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
-
                        
                         file_id = uploaded_file.get('id')
-
                         
                         permission = {
                             'role': 'reader',
@@ -664,34 +680,36 @@ class MouseCoordinateApp(QWidget):
                         self.messagem.setStyleSheet("font-weight: bold; color: red;")
                         return
 
-                    ##try:
-                    ##    if rota != "base":
-                    ##        db.collection('bipagem').document(formatted_code).set({
-                    ##            'Empresa': self.empresa_box.currentText(),
-                    ##            'Funcionario': self.nome_input.text(),
-                    ##            'Entregador': self.entregador_input.text(),
-                    ##            'Local': self.combo_box.button.text().upper(),
-                    ##            'Codigo_de_ficha': formatted_code,
-                    ##            'Hora_e_Dia': formatted_now,
-                    ##            'Quantidade': self.counter_label.text(),
-                    ##            'Inicio': "aguardando",
-                    ##            'Fim': "aguardando",
-                    ##            'Status': "aguardando",
-                    ##            'Motorista': "aguardando",
-                    ##            'Codigos inseridos': self.codigos_inseridos,
-                    ##            'Rota': rota,
-                    ##            'Download_link': public_url
-                    ##        })
-                    ##    else:
-                    ##        pass
-                    ##except Exception as e:
-                    ##    self.messagem.setText(f"Erro ao salvar dados no Firestore: {e}")
-                    ##    self.messagem.setStyleSheet("font-weight: bold; color: red;")
-                    ##    return
-                    QMessageBox.information(self, "Sucesso", f"Romanio salvo com sucesso.")
+                    try:
+                        if rota == None:
+                            rota = 'base'
+                        if rota != "base":
+                            db.collection('bipagem').document(formatted_code).set({
+                                'Empresa': self.empresa_box.currentText(),
+                                'Funcionario': self.nome_input.text(),
+                                'Entregador': self.entregador_input.text(),
+                                'Local': self.combo_box.button.text().upper(),
+                                'Codigo_de_ficha': formatted_code,
+                                'Hora_e_Dia': formatted_now,
+                                'Quantidade': self.counter_label.text(),
+                                'Inicio': "aguardando",
+                                'Fim': "aguardando",
+                                'Status': "aguardando",
+                                'Motorista': "aguardando",
+                                'Codigos inseridos': self.insertedBarCodes,
+                                'Rota': rota,
+                                'Download_link': public_url
+                            })
+                        else:
+                            pass
+                    except Exception as e:
+                        self.messagem.setText(f"Erro ao salvar dados no Firestore: {e}")
+                        self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                        return
+                    QMessageBox.information(self, "Sucesso", f"Romaneio salvo com sucesso.")
                     self.messagem.setText(f"Insira o proximo entregador e realize as bipagems!")
                     self.messagem.setStyleSheet("font-weight: bold; color: blue;")
-                    self.resetar_lista()
+                    self.ResetList()
                 else:
                     self.messagem.setText(f"Prossiga com a bipagem normalmente.")
                     self.messagem.setStyleSheet("font-weight: bold; color: blue;")
@@ -703,66 +721,65 @@ class MouseCoordinateApp(QWidget):
             self.messagem.setText(f"Erro inesperado: {e}")
             self.messagem.setStyleSheet("font-weight: bold; color: red;")
   
-    def resetar_lista(self):
-        self.codigos_inseridos.clear()
+    def ResetList(self):
+        self.insertedBarCodes.clear()
         self.entregador_input.clear()
-        if os.path.exists("codigos_inseridos.txt"): os.remove("codigos_inseridos.txt")
-        self.update_codigos_list_widget()
+        if os.path.exists("insertedBarCodes.txt"): os.remove("insertedBarCodes.txt")
+        self.UpdateBarCodeListWidget()
 
-    def deletar_codigo(self):
+    def DeleteBarCode(self):
         selected_items = self.codigos_list_widget.selectedItems()
         if not selected_items: return
         for item in selected_items:
             codigo = item.text()
-            self.codigos_inseridos.remove(codigo)
+            self.insertedBarCodes.remove(codigo)
             self.codigos_list_widget.takeItem(self.codigos_list_widget.row(item))
             self.counter -= 1
             self.counter_label.setText(f"Contador: {self.counter}")
-        self.salvar_codigos_inseridos()
+        self.salvar_insertedBarCodes()
         self.search_input.clear()
 
-    def salvar_codigos_inseridos(self):
-        with open("codigos_inseridos.txt", "w") as file:
-            for codigo in self.codigos_inseridos:
+    def salvar_insertedBarCodes(self):
+        with open("insertedBarCodes.txt", "w") as file:
+            for codigo in self.insertedBarCodes:
                 file.write(f"{codigo}\n")
 
-    def filtrar_codigos(self):
+    def FilterBarCodes(self):
         search_term = self.search_input.text().lower()
         self.codigos_list_widget.clear()
-        for codigo in self.codigos_inseridos:
+        for codigo in self.insertedBarCodes:
             if search_term in codigo.lower(): self.codigos_list_widget.addItem(codigo)
 
-    def adicionar_codigo(self):
-        codigo_barras = self.adicionar_codigo_input.text()
-        if codigo_barras in self.codigos_inseridos:
-            self.adicionar_codigo_input.clear()
+    def AddBarCode(self):
+        barCode = self.AddBarCode_input.text()
+        if barCode in self.insertedBarCodes:
+            self.AddBarCode_input.clear()
             self.bring_to_front()
             winsound.Beep(820, 1000)
             self.messagem.setText("Código de barras já inserido.")
             self.messagem.setStyleSheet("font-weight: bold; color: red;")
             return
-        if codigo_barras:
-            self.codigos_inseridos.add(codigo_barras)
-            self.salvar_codigo(codigo_barras)
-            self.update_codigos_list_widget()
+        if barCode:
+            self.insertedBarCodes.add(barCode)
+            self.SaveBarCode(barCode)
+            self.UpdateBarCodeListWidget()
             self.sound_success()
-            self.adicionar_codigo_input.clear()
+            self.AddBarCode_input.clear()
         else: 
             self.messagem.setText("Insira um código válido.")
             self.messagem.setStyleSheet("font-weight: bold; color: red;")
 
-def inserir_codigo(codigo_barras, x, y, x2, y2, tempo1, tempo2, tempo_entregador, tempo_base):
-    coordenadas_base = [(x, y)] * tempo_base
-    coordenadas_entregador = [(x2, y2)] * tempo_entregador
-    coordenadas_abas = {
-        "aba1": {f"campo{i+1}": coord for i, coord in enumerate(coordenadas_base)},
-        "aba2": {f"campo{i+1}": coord for i, coord in enumerate(coordenadas_entregador)},
+def InsertBarCode(barCode, x, y, x2, y2, tempo1, tempo2, tempTwo, tempOne):
+    positionOne = [(x, y)] * tempOne
+    positionTwo = [(x2, y2)] * tempTwo
+    positions = {
+        "positions1": {f"field{i+1}": coord for i, coord in enumerate(positionOne)},
+        "positions2": {f"field{i+1}": coord for i, coord in enumerate(positionTwo)},
     }
-
-    pyperclip.copy(codigo_barras)
-    for aba, campos in coordenadas_abas.items():
-        for campo, coordenadas in campos.items():
-            pyautogui.moveTo(*coordenadas, duration=0)
+    pyperclip.copy(barCode)
+    for positions, fields in positions.items():
+        for field, coordinates in fields.items():
+            pyautogui.moveTo(*coordinates, duration=0)
             pyautogui.click()
             pyautogui.hotkey("ctrl", "v")
             time.sleep(tempo1)
