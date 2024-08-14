@@ -69,10 +69,10 @@ cidades_feira = rota_01 + rota_02 + rota_03 + rota_04 + rota_05 + rota_06 + rota
 barrios_feria = [
     "35º BI","ALTO DO CRUZEIRO","ALTO DO PAPAGAIO","ASA BRANCA","AVIÁRIO",
     "BARAÚNAS","BRASÍLIA","CALUMBI","CAMPO DO GADO NOVO","CAMPO LIMPO",
-    "CASEB","CASEB","CENTRO","CIDADE NOVA","FEIRA IX","FEIRA IX","FEIRA VI",
-    "FEIRA VII","FEIRA VIII","FEIRA X","FEIRA X","GABRIELA","GEORGE AMÉRICO",
+    "CASEB","CONCEIÇÃO","CENTRO","CIDADE NOVA","FEIRA IX","FEIRA IX","FEIRA VI",
+    "FEIRA VII","FEIRA VIII","FEIRA X","GABRIELA","GEORGE AMÉRICO",
     "JARDIM ACÁCIA","JARDIM CRUZEIRO","LAGOA SALGADA","LIMOEIRO","MANGABEIRA",
-    "MUCHILA","NOVA BRASÍLIA","NOVA ESPERANÇA","NOVA ESPERANÇA","NOVO HORIZONTE",
+    "MUCHILA","NOVA BRASÍLIA","NOVA ESPERANÇA","NOVO HORIZONTE",
     "PAPAGAIO","PARQUE GETÚLIO VARGAS","PARQUE IPÊ","PARQUE IPÊ","PARQUE LAGOA SUBAÉ",
     "PARQUE VIVER","PONTO CENTRAL","QUEIMADINHA","RUA NOVA","SANTA MÔNICA",
     "SANTO ANTÔNIO DOS PRAZERES","SÃO JOÃO","SIM","SÍTIO MATIAS","SOBRADINHO",
@@ -95,15 +95,22 @@ barrios_saj = [
     "RÁDIO CLUBE","SALGADEIRA","SANTA MADALENA","SÃO FRANCISCO","SÃO PAULO",
     "URBIS I","URBIS II","URBIS III","ZILDA ARNS"
 ]
+barrios_jacobina = [
+    "CENTRO","FÉLIX TOMAZ","PERU","MUNDO NOVO","LEADER","MISSÃO","JACOBINA II",
+    "JACOBINA III","JACOBINA IV","JACOBINA V","CATUABA","LAGOA DOURADA",
+    "GROTINHA","CAEIRA","BANANEIRA","NAZARÉ","INOCOOP","ESTAÇÃO","MUTIRÃO",
+    "LADEIRA VERMELHA","LAGOINHA NOVA","LAGOINHA VELHA","BAIRRO DOS ÍNDIOS",
+    "MATRIZ","MORRO DO CRUZEIRO","VILA FELIZ","JACOBINA I"
+]
 empresa = [
-    "LOGGI", "JADLOG", "SHOPEE", "ANJUN", "SEQUOIA"
+    "LOGGI", "JADLOG", "SHOPEE", "ANJUN", "SEQUOIA", "IMILE"
 ]
 base = [
-    "FEIRA DE SANTANA", "BAIRROS DE FEIRA DE SANTANA", "ALAGOINHAS", "BAIRROS DE ALAGOINHAS",
-    "JACOBINA", "SANTO ANTONIO DE JESUS", "BAIRROS DE S. A. DE JESUS", "TRANSFERENCIA", "DEVOLUÇÃO" 
+    "FEIRA DE SANTANA", "BAIRROS DE FEIRA DE SANTANA", "BAIRROS DE ALAGOINHAS","BAIRROS DE JACOBINA","ALAGOINHAS",  
+    "JACOBINA", "SANTO ANTONIO DE JESUS", "BAIRROS DE S. A. DE JESUS", "TRANSFERENCIA", "DEVOLUÇÃO", "TODOS AS LOCALIDADES"
 ]
 tranferencia = [
-    "TRANSFERENCIA PARA FEIRA", "TRANSFERENCIA PARA ALAGOINHAS", "TRANSFERENCIA PARA JACOBINA", "TRANSFERENCIA PARA SANTO ANTONIO DE JESUS", "TRATATIVA"
+    "TRANSFERENCIA PARA FEIRA", "TRANSFERENCIA PARA ALAGOINHAS", "TRANSFERENCIA PARA JACOBINA", "TRANSFERENCIA PARA S. A. DE JESUS", "TRATATIVA"
 ]
 devolucaos = [
     "DEVOLUÇÃO PARA LOGGI", "DEVOLUÇÃO PARA FEIRA", "DEVOLUÇÃO PARA JADLOG", 
@@ -128,6 +135,8 @@ cidades_jacobina = [
     "CAÉM","MIGUEL CALMON","SERROLÂNDIA","VÁRZEA DO POÇO",
     "VÁRZEA NOVA","JACOBINA"
 ]
+
+allLocate = barrios_feria + barrios_alagoinhas + barrios_jacobina + cidades_feira + cidades_algoinhas + cidades_jacobina + cidades_saj + barrios_saj + devolucaos + tranferencia
 
 rota_dict = {city: '001' for city in rota_01}
 rota_dict.update({city: '002' for city in rota_02})
@@ -369,7 +378,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.7.7")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.8.9")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -419,11 +428,19 @@ class MouseCoordinateApp(QWidget):
             self.cidade_label.setText("Bairros:")
         elif base_selecionada == "BAIRROS DE S. A. DE JESUS":
             self.atualizar_cidades(sorted(barrios_saj))
-            self.cidade_label.setText("Bairros:")   
+            self.cidade_label.setText("Bairros:") 
+        elif base_selecionada == "BAIRROS DE JACOBINA":
+            self.atualizar_cidades(sorted(barrios_saj))
+            self.cidade_label.setText("Bairros:")
+        elif base_selecionada == "TODOS AS LOCALIDADES":
+            self.atualizar_cidades(sorted(allLocate))
+            self.cidade_label.setText("Bairros, Cidades, Locais:") 
     def atualizar_cidades(self, lista_cidades):
         global cidades
         cidades = lista_cidades
         self.combo_box.items = lista_cidades
+        self.combo_box.button.setText('Click aqui para selecionar o local')
+        
         
     def start_set_position1(self):
         self.messagem.setText("Posicione o mouse e pressione Enter.")
@@ -547,34 +564,40 @@ class MouseCoordinateApp(QWidget):
                     formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
                     folder_date = now.strftime("%d-%m-%Y")
                     folder_name = self.combo_box.button.text().upper()
-                    folder_first = self.nome_input.text().upper()
+                    folder_first = self.base_combo_box.currentText().upper()
                     folder_zero = self.empresa_box.currentText().upper()
                     
                     default_font_size = 12
                     signature_font_size = 16
-                    
-                    c.drawString(390, 750, "Empresa de serviços: " + self.empresa_box.currentText())
+                    title_font_size = 18
+
+                    c.setFont("Helvetica-Bold", title_font_size)
+
+                    c.line(70, 765, 540, 765)
+                    c.line(70, 630, 540, 630)
+
+                    c.setFont("Helvetica", default_font_size)
                     c.drawString(70, 750, "Codigo de ficha: " + formatted_code)
-                    c.drawString(70, 735, "Funcionario: " + self.nome_input.text())
-                    c.drawString(70, 720, "Entregador: " + self.entregador_input.text())
-                    c.drawString(70, 705, self.counter_label.text())
-                    c.drawString(70, 690, "Dia e hora da bipagem: " + formatted_now)
-                    c.drawString(70, 675, "Região: " + self.base_combo_box.currentText())
-                    c.drawString(70, 660, "Data: ___/___/_____")
+                    c.drawString(70, 735, "Empresa de serviços: " + self.empresa_box.currentText())
+                    c.drawString(70, 720, "Funcionario: " + self.nome_input.text())
+                    c.drawString(70, 705, "Entregador: " + self.entregador_input.text())
+                    c.drawString(70, 690, self.counter_label.text())
+                    c.drawString(70, 675, "Dia e hora da bipagem: " + formatted_now)
+                    c.drawString(70, 660, "Região: " + self.base_combo_box.currentText())
+                    c.setFont("Helvetica", signature_font_size)
+                    c.drawString(70, 635, "Assinatura: ____________________________ Data: __/__/____")
+                    c.setFont("Helvetica", default_font_size)
+
+                    c.drawString(70, 605, self.cidade_label.text() + " " + self.combo_box.button.text().upper())
                     
                     c.setFont("Helvetica", signature_font_size)
-                    c.drawString(70, 640, "Assinatura: _________________________________")
+                    c.drawString(300, 585, "Caixas: ______    Sacas: ______")
+                    c.drawString(70, 585, "Codigos inseridos:")
+
                     c.setFont("Helvetica", default_font_size)
-            
-                    c.drawString(70, 620, self.cidade_label.text() + " " + self.combo_box.button.text().upper())
-                    
-                    c.setFont("Helvetica", signature_font_size)
-                    c.drawString(300, 600, "Caixas: ______    Sacas: ______")
-                    c.drawString(70, 600, "Codigos inseridos:")
-                    c.setFont("Helvetica", default_font_size)
-                    
+
                     qr_data = formatted_code
-                    qr = qrcode.QRCode( 
+                    qr = qrcode.QRCode(
                         version=1,
                         error_correction=qrcode.constants.ERROR_CORRECT_L,
                         box_size=25,
@@ -588,9 +611,9 @@ class MouseCoordinateApp(QWidget):
                     img.save(qr_buffer, format='PNG')
                     qr_buffer.seek(0)
 
-                    c.drawImage(ImageReader(qr_buffer), 430, 645, 100, 100) 
+                    c.drawImage(ImageReader(qr_buffer), 430, 650, 110, 110)
 
-                    y = 585
+                    y = 570
                     for codigo in self.insertedBarCodes:
                         if y < 50:
                             c.showPage()
@@ -599,7 +622,7 @@ class MouseCoordinateApp(QWidget):
                         y -= 12
 
                     c.save()
-
+                    
                     try:
                         with open('service-account-credentials.json') as json_file:
                             data = json.load(json_file)
@@ -654,8 +677,12 @@ class MouseCoordinateApp(QWidget):
                     try:
                         main_folder_id = find_or_create_folder(folder_date, "15K7K7onfz98E2UV31sFHWIQf7RGWhApV")
                         folder_zero_id = find_or_create_folder(folder_zero, main_folder_id)
-                        first_subfolder_id = find_or_create_folder(folder_first, folder_zero_id)
-                        second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
+                        
+                        if self.cidade_label.text() == "Bairros:":
+                            first_subfolder_id = find_or_create_folder(folder_first, folder_zero_id)
+                            second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
+                        else:
+                            second_subfolder_id = find_or_create_folder(folder_name, folder_zero_id)
 
                         file_metadata = {
                             "name": os.path.basename(file_path),
