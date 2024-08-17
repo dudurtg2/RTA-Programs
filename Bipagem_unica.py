@@ -59,7 +59,6 @@ rota_06 = [
     "CIPÓ","BANZAÊ","FATIMA","CICERO DANTAS","NOVA SOURE","TUCANO","RIBEIRA DO AMPARO","SITIO DO QUINTO","CORONEL JOÃO SÁ","HELIOPOLIS","RIBEIRA DO POMBAL",
     "ADUSTINA","ANTAS","ITIÚBA","JEREMOABO","MONTE SANTO","NORDESTINA","NOVO TRIUNFO","PARIPIRANGA","PEDRO ALEXANDRE","QUIJINGUE","SANTA BRÍGIDA", "EUCLIDES DA CUNHA",
     "ABARE", "CHORROCHO", "GLORIA", "ITAPICURU", "MACURURE", "PAULO AFONSO", "RODELAS", "OLINDINA"
-    
 ]
 rota_07 = [
     "SANTO ESTEVÃO","ANTONIO CARDOSO","IPECAETA","SÃO GONÇALO DOS CAMPOS", "ANGUERA", "SERRA PRETA", "RAFAEL JAMBEIRO", "HUMILDES"
@@ -104,18 +103,40 @@ barrios_jacobina = [
     "MATRIZ","MORRO DO CRUZEIRO","VILA FELIZ","JACOBINA I"
 ]
 empresa = [
-    "LOGGI", "JADLOG", "SHOPEE", "ANJUN", "SEQUOIA", "IMILE"
+    "LOGGI",
+    "JADLOG", 
+    "SHOPEE",
+    "ANJUN",
+    "SEQUOIA",
+    "IMILE"
 ]
 base = [
-    "FEIRA DE SANTANA", "BAIRROS DE FEIRA DE SANTANA", "BAIRROS DE ALAGOINHAS","BAIRROS DE JACOBINA","ALAGOINHAS",  
-    "JACOBINA", "SANTO ANTONIO DE JESUS", "BAIRROS DE S. A. DE JESUS", "TRANSFERENCIA", "DEVOLUÇÃO", "TODOS AS LOCALIDADES"
+    "FEIRA DE SANTANA",
+    "SANTO ANTONIO DE JESUS", 
+    "ALAGOINHAS",  
+    "JACOBINA", 
+    "BAIRROS DE FEIRA DE SANTANA",
+    "BAIRROS DE ALAGOINHAS",
+    "BAIRROS DE JACOBINA",
+    "BAIRROS DE S. A. DE JESUS", 
+    "TRANSFERENCIA", 
+    "DEVOLUÇÃO", 
+    "TODOS AS LOCALIDADES"
 ]
 tranferencia = [
-    "TRANSFERENCIA PARA FEIRA", "TRANSFERENCIA PARA ALAGOINHAS", "TRANSFERENCIA PARA JACOBINA", "TRANSFERENCIA PARA S. A. DE JESUS", "TRATATIVA"
+    "PACOTES EM TRATATIVA",
+    "TRANSFERENCIA PARA FEIRA", 
+    "TRANSFERENCIA PARA ALAGOINHAS", 
+    "TRANSFERENCIA PARA JACOBINA",
+    "TRANSFERENCIA PARA S. A. DE JESUS",
 ]
 devolucaos = [
-    "DEVOLUÇÃO PARA LOGGI", "DEVOLUÇÃO PARA FEIRA", "DEVOLUÇÃO PARA JADLOG", 
-    "DEVOLUÇÃO PARA SHOPEE", "DEVOLUÇÃO PARA ANJUN", "DEVOLUÇÃO PARA SEQUOIA"
+    "DEVOLUÇÃO PARA FEIRA",
+    "DEVOLUÇÃO PARA LOGGI",
+    "DEVOLUÇÃO PARA JADLOG", 
+    "DEVOLUÇÃO PARA SHOPEE",
+    "DEVOLUÇÃO PARA ANJUN",
+    "DEVOLUÇÃO PARA SEQUOIA"
 ]
 
 cidades_algoinhas = [
@@ -225,6 +246,7 @@ class ComboBoxWithDialog(QWidget):
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
+        
         global cidades
         self.currently_setting_position = None
         self.setWindowTitle("Bipagem RTA")
@@ -233,6 +255,7 @@ class MouseCoordinateApp(QWidget):
         layout = QVBoxLayout()
         self.messagem = QLabel("Defina as posicoes dos mouse e aperte Enter.")
         self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+        
         layout.addWidget(self.messagem)
 
         self.layout_nome = QHBoxLayout()
@@ -240,6 +263,7 @@ class MouseCoordinateApp(QWidget):
         self.layout_nome.addWidget(self.nome_label)
         self.nome_input = QLineEdit()
         self.layout_nome.addWidget(self.nome_input)
+        
         layout.addLayout(self.layout_nome)
 
         self.layout_entregador = QHBoxLayout()
@@ -256,6 +280,7 @@ class MouseCoordinateApp(QWidget):
         self.empresa_box = QComboBox()
         self.empresa_box.addItems(empresa)
         self.layout_empresa.addWidget(self.empresa_box)
+        
         layout.addLayout(self.layout_empresa)
         
         self.layout_base = QHBoxLayout()
@@ -264,6 +289,7 @@ class MouseCoordinateApp(QWidget):
         self.base_combo_box = QComboBox()
         self.base_combo_box.addItems(base)
         self.layout_base.addWidget(self.base_combo_box)
+        
         layout.addLayout(self.layout_base)
         self.base_combo_box.currentIndexChanged.connect(self.on_base_selected)
         
@@ -271,27 +297,31 @@ class MouseCoordinateApp(QWidget):
         self.cidade_label = QLabel("Cidade:")
         self.combo_box = ComboBoxWithDialog(sorted(cidades))
         self.layout_cidade.addWidget(self.combo_box)
+        
         layout.addLayout(self.layout_cidade)
 
         self.label = QLabel("Clique nos botões para definir a posição do mouse:")
         self.label.setStyleSheet("font-weight: bold;")
+        
         layout.addWidget(self.label)
 
         position_layout = QHBoxLayout()
-  
         self.button1 = QPushButton("Definir Posição 1")
         self.button1.setStyleSheet("font-weight: bold; color: red;")
-        self.button1.clicked.connect(self.start_set_position1)
+        self.button1.clicked.connect(lambda: self.start_set_position("pos1"))
         position_layout.addWidget(self.button1)
+        
         layout.addLayout(position_layout)
         
         self.button2 = QPushButton("Definir Posição 2")
         self.button2.setStyleSheet("font-weight: bold; color: red;")
-        self.button2.clicked.connect(self.start_set_position2)
+        self.button2.clicked.connect(lambda: self.start_set_position("pos2"))
         position_layout.addWidget(self.button2)
+        
         layout.addLayout(position_layout)
 
         tempo_layout = QHBoxLayout()
+        
         layout.addLayout(tempo_layout)
 
         self.label_tempo1 = QLabel("Tempo de colagem:")
@@ -307,12 +337,13 @@ class MouseCoordinateApp(QWidget):
         tempo_layout.addWidget(self.tempo2_spinbox)
 
         tempo_layout_base = QHBoxLayout()
+        
         layout.addLayout(tempo_layout_base)
 
         self.label_tempOne = QLabel("Colagem na posicão 1:")
         tempo_layout_base.addWidget(self.label_tempOne)
         self.tempOne_spinbox = QSpinBox()
-        self.tempOne_spinbox.setRange(0, 5)
+        self.tempOne_spinbox.setRange(1, 5)
         tempo_layout_base.addWidget(self.tempOne_spinbox)
 
         self.label_tempTwo = QLabel("e posicão 2:")
@@ -333,6 +364,7 @@ class MouseCoordinateApp(QWidget):
         layout.addWidget(self.counter_label)
         
         editList = QHBoxLayout()
+        
         layout.addLayout(editList)
         
         self.delete_button = QPushButton("Delete selecionado")
@@ -367,6 +399,7 @@ class MouseCoordinateApp(QWidget):
         layout.addLayout(self.button)
         
         sound_layout = QHBoxLayout()
+        
         layout.addLayout(sound_layout)
         
         self.sound_text = QLabel("Perfil de som:")
@@ -379,20 +412,21 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão T-1.0")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.9.0")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
+        
         layout.addLayout(self.ceos_label_layout)
 
         self.setLayout(layout)
         
         self.tempTwo_spinbox.setValue(1)
-        self.tempOne_spinbox.setValue(2)
-        self.tempo2_spinbox.setValue(800)
-        self.tempo1_spinbox.setValue(150)
-        self.sound_temp.setValue(250)
-        self.sound_imput.setValue(3520)
+        self.tempOne_spinbox.setValue(1)
+        self.tempo2_spinbox.setValue(20)
+        self.tempo1_spinbox.setValue(20)
+        self.sound_temp.setValue(150)
+        self.sound_imput.setValue(1530)
         self.positions = {}
         self.counter = 0
         self.AddBarCode_input.returnPressed.connect(self.AddBarCode)
@@ -403,55 +437,36 @@ class MouseCoordinateApp(QWidget):
     
     def on_base_selected(self, index):
         base_selecionada = self.base_combo_box.currentText()
-        if base_selecionada == "ALAGOINHAS":
-            self.atualizar_cidades(sorted(cidades_algoinhas))
-            self.cidade_label.setText("Cidade:")
-        elif base_selecionada == "JACOBINA":
-            self.atualizar_cidades(sorted(cidades_jacobina)) 
-            self.cidade_label.setText("Cidade:")
-        elif base_selecionada == "SANTO ANTONIO DE JESUS":
-            self.atualizar_cidades(sorted(cidades_saj))
-            self.cidade_label.setText("Cidade:")
-        elif base_selecionada == "FEIRA DE SANTANA":
-            self.atualizar_cidades(sorted(cidades_feira))
-            self.cidade_label.setText("Cidade:") 
-        elif base_selecionada == "DEVOLUÇÃO":
-            self.atualizar_cidades(sorted(devolucaos))
-            self.cidade_label.setText("Local:") 
-        elif base_selecionada == "TRANSFERENCIA":
-            self.atualizar_cidades(sorted(tranferencia))
-            self.cidade_label.setText("Local:")
-        elif base_selecionada == "BAIRROS DE FEIRA DE SANTANA":
-            self.atualizar_cidades(sorted(barrios_feria))
-            self.cidade_label.setText("Bairros:")
-        elif base_selecionada == "BAIRROS DE ALAGOINHAS":
-            self.atualizar_cidades(sorted(barrios_alagoinhas))
-            self.cidade_label.setText("Bairros:")
-        elif base_selecionada == "BAIRROS DE S. A. DE JESUS":
-            self.atualizar_cidades(sorted(barrios_saj))
-            self.cidade_label.setText("Bairros:") 
-        elif base_selecionada == "BAIRROS DE JACOBINA":
-            self.atualizar_cidades(sorted(barrios_saj))
-            self.cidade_label.setText("Bairros:")
-        elif base_selecionada == "TODOS AS LOCALIDADES":
-            self.atualizar_cidades(sorted(allLocate))
-            self.cidade_label.setText("Bairros, Cidades, Locais:") 
+
+        base_mapping = {
+            "ALAGOINHAS": (cidades_algoinhas, "Cidade:"),
+            "JACOBINA": (cidades_jacobina, "Cidade:"),
+            "SANTO ANTONIO DE JESUS": (cidades_saj, "Cidade:"),
+            "FEIRA DE SANTANA": (cidades_feira, "Cidade:"),
+            "DEVOLUÇÃO": (devolucaos, "Local:"),
+            "TRANSFERENCIA": (tranferencia, "Local:"),
+            "BAIRROS DE FEIRA DE SANTANA": (barrios_feria, "Bairros:"),
+            "BAIRROS DE ALAGOINHAS": (barrios_alagoinhas, "Bairros:"),
+            "BAIRROS DE S. A. DE JESUS": (barrios_saj, "Bairros:"),
+            "BAIRROS DE JACOBINA": (barrios_saj, "Bairros:"),
+            "TODOS AS LOCALIDADES": (allLocate, "Bairros, Cidades, Locais:"),
+        }
+
+        if base_selecionada in base_mapping:
+            cidades_list, label_text = base_mapping[base_selecionada]
+            self.atualizar_cidades(sorted(cidades_list))
+            self.cidade_label.setText(label_text)
+
     def atualizar_cidades(self, lista_cidades):
         global cidades
         cidades = lista_cidades
         self.combo_box.items = lista_cidades
         self.combo_box.button.setText('Click aqui para selecionar o local')
-        
-        
-    def start_set_position1(self):
-        self.messagem.setText("Posicione o mouse e pressione Enter.")
-        self.messagem.setStyleSheet("font-weight: bold; color: blue;")
-        self.currently_setting_position = 'pos1'
 
-    def start_set_position2(self):
+    def start_set_position(self, position):
         self.messagem.setText("Posicione o mouse e pressione Enter.")
         self.messagem.setStyleSheet("font-weight: bold; color: blue;")
-        self.currently_setting_position = 'pos2'
+        self.currently_setting_position = position
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
@@ -459,9 +474,11 @@ class MouseCoordinateApp(QWidget):
                 x, y = pyautogui.position()
                 self.positions[self.currently_setting_position] = (x, y)
                 if self.currently_setting_position == 'pos1':
-                    self.update_button1_text(x, y)
+                    self.button1.setText(f"Posição 1: ({x}, {y})")
+                    self.button1.setStyleSheet("font-weight: bold; color: blue;")
                 elif self.currently_setting_position == 'pos2':
-                    self.update_button2_text(x, y)
+                    self.button2.setText(f"Posição 2: ({x}, {y})")
+                    self.button2.setStyleSheet("font-weight: bold; color: blue;")
                 self.currently_setting_position = None
                 if "pos1" in self.positions and "pos2" in self.positions:
                     self.messagem.setText("Agora realize a inserção do código de barras.")
@@ -470,14 +487,6 @@ class MouseCoordinateApp(QWidget):
                     self.messagem.setText("Agora defina a proxima posição.")
                     self.messagem.setStyleSheet("font-weight: bold; color: red;")
 
-    def update_button1_text(self, x, y):
-        self.button1.setText(f"Posição 1: ({x}, {y})")
-        self.button1.setStyleSheet("font-weight: bold; color: blue;")
-
-    def update_button2_text(self, x, y):
-        self.button2.setText(f"Posição 2: ({x}, {y})")
-        self.button2.setStyleSheet("font-weight: bold; color: blue;")
-        
     def carregar_insertedBarCodes(self):
         insertedBarCodes = set()
         if os.path.exists("insertedBarCodes.txt"):
@@ -505,8 +514,12 @@ class MouseCoordinateApp(QWidget):
     def StartInsertBarCode(self):
         if ( "pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != ""):
             barCode = self.entry.text()
-            if len(barCode) < 1:
-                self.messagem.setText( "Código de barras inválido. \nInsira um código com pelo menos 1 caractere." )
+            if len(barCode) < 5:
+                self.messagem.setText( "Código de barras inválido. \nInsira um código com pelo menos 5 caractere." )
+                self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                return
+            if len(barCode) > 55:
+                self.messagem.setText( "Código de barras inválido. \nInsira um código com no maximo 55 caractere." )
                 self.messagem.setStyleSheet("font-weight: bold; color: red;")
                 return
             
@@ -551,11 +564,14 @@ class MouseCoordinateApp(QWidget):
                 formatted_code = now.strftime("RTA%Y%m%d%H%M%S%f")[:-3] + "LC"
                 self.messagem.setText(f"Salvando...")
                 self.messagem.setStyleSheet("font-weight: bold; color: blue;")
-
+                locate = ",Entregador "
+                if self.cidade_label.text() == "Local:":
+                    locate = ",Destino "
+                
                 file_path, _ = QFileDialog.getSaveFileName(
                     self,
                     "Salvar Lista",
-                    formatted_code + ", entregador. " + self.entregador_input.text().upper(),
+                    formatted_code + locate + self.entregador_input.text().upper(),
                     "PDF Files (*.pdf);;All Files (*)",
                     options=options,
                 )
@@ -652,7 +668,6 @@ class MouseCoordinateApp(QWidget):
                         self.messagem.setText(f"Erro ao inicializar Google Drive: {e}")
                         self.messagem.setStyleSheet("font-weight: bold; color: red;")
                         return
-
                     def find_or_create_folder(folder_name, parent_id=None):
                         query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
                         if parent_id:
@@ -737,6 +752,7 @@ class MouseCoordinateApp(QWidget):
                     QMessageBox.information(self, "Sucesso", f"Romaneio salvo com sucesso.")
                     self.messagem.setText(f"Insira o proximo entregador e realize as bipagems!")
                     self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+                    
                     self.ResetList()
                 else:
                     self.messagem.setText(f"Prossiga com a bipagem normalmente.")
@@ -751,7 +767,8 @@ class MouseCoordinateApp(QWidget):
   
     def ResetList(self):
         self.insertedBarCodes.clear()
-        self.entregador_input.clear()
+        if not self.cidade_label.text() == "Local:":
+            self.entregador_input.clear()
         if os.path.exists("insertedBarCodes.txt"): os.remove("insertedBarCodes.txt")
         self.UpdateBarCodeListWidget()
 
