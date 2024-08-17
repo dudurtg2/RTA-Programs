@@ -50,14 +50,15 @@ rota_03 = [
     "MURITIBA","SAPEAÇU","CRUZ DAS ALMAS","GOVERNADOR MANGABEIRA","CABACEIRA DO PARAGUAÇU","SÃO FELIPE","MARAGOGIPE","CACHOEIRA ","SÃO FELIX","CONCEIÇÃO DA FEIRA"
 ]
 rota_04 = [
-    "SERRINHA","BIRITINGA","BARROCAS","ARACI","TEOFILANDIA","TANQUINHO","CANDEAL","ICHU","CONCEIÇÃO DO COITÉ","RIACHÃO DO JACUIPE","PE DE SERRA"
+    "GAVIÃO", "SERRINHA","BIRITINGA","BARROCAS","ARACI","TEOFILANDIA","TANQUINHO","CANDEAL","ICHU","CONCEIÇÃO DO COITÉ","RIACHÃO DO JACUIPE","PE DE SERRA"
 ]
 rota_05 = [
     "VALENTE","RETIROLANDIA","SANTA LUZ","CANSANÇÃO","QUEIMADAS","SÃO DOMINGOS","NOVA FATIMA"
 ]
 rota_06 = [
     "CIPÓ","BANZAÊ","FATIMA","CICERO DANTAS","NOVA SOURE","TUCANO","RIBEIRA DO AMPARO","SITIO DO QUINTO","CORONEL JOÃO SÁ","HELIOPOLIS","RIBEIRA DO POMBAL",
-    "ADUSTINA","ANTAS","ITIÚBA","JEREMOABO","MONTE SANTO","NORDESTINA","NOVO TRIUNFO","PARIPIRANGA","PEDRO ALEXANDRE","QUIJINGUE","SANTA BRÍGIDA", "EUCLIDES DA CUNHA"
+    "ADUSTINA","ANTAS","ITIÚBA","JEREMOABO","MONTE SANTO","NORDESTINA","NOVO TRIUNFO","PARIPIRANGA","PEDRO ALEXANDRE","QUIJINGUE","SANTA BRÍGIDA", "EUCLIDES DA CUNHA",
+    "ABARE", "CHORROCHO", "GLORIA", "ITAPICURU", "MACURURE", "PAULO AFONSO", "RODELAS", "OLINDINA"
     
 ]
 rota_07 = [
@@ -378,7 +379,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.8.9")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão T-1.0")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -762,7 +763,7 @@ class MouseCoordinateApp(QWidget):
             self.insertedBarCodes.remove(codigo)
             self.codigos_list_widget.takeItem(self.codigos_list_widget.row(item))
             self.counter -= 1
-            self.counter_label.setText(f"Contador: {self.counter}")
+            self.counter_label.setText(f"Quantidade: {self.counter}")
         self.salvar_insertedBarCodes()
         self.search_input.clear()
 
@@ -811,7 +812,10 @@ def InsertBarCode(barCode, x, y, x2, y2, tempo1, tempo2, tempTwo, tempOne):
             pyautogui.hotkey("ctrl", "v")
             time.sleep(tempo1)
             pyautogui.press("enter")
-            time.sleep(tempo1)
+            time.sleep(20 / 1000)
+            pyautogui.hotkey("ctrl", "a")
+            pyautogui.press("backspace")
+            time.sleep(20 / 1000)
         time.sleep(tempo2)
 
 if __name__ == "__main__":
