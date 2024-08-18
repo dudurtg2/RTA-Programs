@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['F:\\rta_system\\Bipagem_unica.py'],
+    ['D:\\rta_system\\Bipagem_unica.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -32,7 +32,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['F:\\rta_system\\Pacotes.ico'],
+    icon=['D:\\rta_system\\Pacotes.ico'],
 )
 coll = COLLECT(
     exe,
