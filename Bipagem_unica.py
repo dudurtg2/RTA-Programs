@@ -40,123 +40,34 @@ from PyQt5.QtWidgets import (
     QDialog,
     QScrollArea
 )
-rota_01 = [
-    "IPIRA","BAIXA GRANDE","MAIRI","VARZEA DA ROÇA","ITABERABA","IAÇU","ITATIM","CASTRO ALVES","SANTA TEREZINHA","MORRO DO CHAPEU","IRECE", "MILAGRES","JADLOG-LUIZ"
-]
-rota_02 = [
-    "AMELIA RODRIGUES","CONCEIÇÃO DO JACUIPE","CORAÇÃO DE MARIA","TEODORO SAMPAIO","IRARA","SANTANOPOLIS","SANTA BARBARA","LAMARÃO ","AGUA FRIA"
-]
-rota_03 = [
-    "MURITIBA","SAPEAÇU","CRUZ DAS ALMAS","GOVERNADOR MANGABEIRA","CABACEIRA DO PARAGUAÇU","SÃO FELIPE","MARAGOGIPE","CACHOEIRA ","SÃO FELIX","CONCEIÇÃO DA FEIRA"
-]
-rota_04 = [
-    "GAVIÃO", "SERRINHA","BIRITINGA","BARROCAS","ARACI","TEOFILANDIA","TANQUINHO","CANDEAL","ICHU","CONCEIÇÃO DO COITÉ","RIACHÃO DO JACUIPE","PE DE SERRA"
-]
-rota_05 = [
-    "VALENTE","RETIROLANDIA","SANTA LUZ","CANSANÇÃO","QUEIMADAS","SÃO DOMINGOS","NOVA FATIMA"
-]
-rota_06 = [
-    "CIPÓ","BANZAÊ","FATIMA","CICERO DANTAS","NOVA SOURE","TUCANO","RIBEIRA DO AMPARO","SITIO DO QUINTO","CORONEL JOÃO SÁ","HELIOPOLIS","RIBEIRA DO POMBAL",
-    "ADUSTINA","ANTAS","ITIÚBA","JEREMOABO","MONTE SANTO","NORDESTINA","NOVO TRIUNFO","PARIPIRANGA","PEDRO ALEXANDRE","QUIJINGUE","SANTA BRÍGIDA", "EUCLIDES DA CUNHA",
-    "ABARE", "CHORROCHO", "GLORIA", "ITAPICURU", "MACURURE", "PAULO AFONSO", "RODELAS", "OLINDINA"
-]
-rota_07 = [
-    "SANTO ESTEVÃO","ANTONIO CARDOSO","IPECAETA","SÃO GONÇALO DOS CAMPOS", "ANGUERA", "SERRA PRETA", "RAFAEL JAMBEIRO", "HUMILDES"
-]
 
+json_file_path = 'Data/data.json'
+
+with open(json_file_path, 'r', encoding='utf-8') as file:
+    data = json.load(file)
+
+rota_01 = data.get("rota_01", [])
+rota_02 = data.get("rota_02", [])
+rota_03 = data.get("rota_03", [])
+rota_04 = data.get("rota_04", [])
+rota_05 = data.get("rota_05", [])
+rota_06 = data.get("rota_06", [])
+rota_07 = data.get("rota_07", [])
+
+cidades_algoinhas = data.get("cidades_algoinhas", [])
+cidades_jacobina = data.get("cidades_jacobina", [])
+cidades_saj = data.get("cidades_saj", [])
 cidades_feira = rota_01 + rota_02 + rota_03 + rota_04 + rota_05 + rota_06 + rota_07
 
-barrios_feria = [
-    "35º BI","ALTO DO CRUZEIRO","ALTO DO PAPAGAIO","ASA BRANCA","AVIÁRIO",
-    "BARAÚNAS","BRASÍLIA","CALUMBI","CAMPO DO GADO NOVO","CAMPO LIMPO",
-    "CASEB","CONCEIÇÃO","CENTRO","CIDADE NOVA","FEIRA IX","FEIRA IX","FEIRA VI",
-    "FEIRA VII","FEIRA VIII","FEIRA X","GABRIELA","GEORGE AMÉRICO",
-    "JARDIM ACÁCIA","JARDIM CRUZEIRO","LAGOA SALGADA","LIMOEIRO","MANGABEIRA",
-    "MUCHILA","NOVA BRASÍLIA","NOVA ESPERANÇA","NOVO HORIZONTE",
-    "PAPAGAIO","PARQUE GETÚLIO VARGAS","PARQUE IPÊ","PARQUE IPÊ","PARQUE LAGOA SUBAÉ",
-    "PARQUE VIVER","PONTO CENTRAL","QUEIMADINHA","RUA NOVA","SANTA MÔNICA",
-    "SANTO ANTÔNIO DOS PRAZERES","SÃO JOÃO","SIM","SÍTIO MATIAS","SOBRADINHO",
-    "SUBAÉ","TOMBA"
-]
-barrios_alagoinhas =[
-    "ALAGOINHAS VELHA","BARREIRO","CATU","CENTRO","DOIS DE JULHO","JARDIM PEDRO BRAGA",
-    "JARDIM PETROLAR","JURACY MAGALHÃES","KENNEDY","MANGALÔ","PARQUE VITÓRIA",
-    "SANTA ISABEL","SANTA TEREZINHA","SILVA JARDIM","TERESÓPOLIS","BOA UNIÃO","BORGES",
-    "BURI","CALU","CAMBOATÁ DE FORA","CANGULA","CONCEIÇÃO DE BAIXO","CONCEIÇÃO DE CIMA",
-    "ENCANTADO","ESTEVÃO","FAZENDA GAMELEIRA","LIMOEIRO","MACAQUINHO","MANGUEIRAS",
-    "MILAGRES","NARANDIBA","OUTEIRO","PAPAGAIO","PEDRA DE BAIXO","PEDRA DE CIMA",
-    "PONTO DO BEIJU","PORTAO","QUINZAMBU","RIACHO DA GUIA","RIACHO DO MEL","RIO BRANCO",
-    "SAUIPE","SUCUPIRA I","SUCUPIRA II","TOMBADOR","TUCUM"
-]
-barrios_saj = [
-    "AMPARO","ANDAIÁ","ALTO SANTO ANTÔNIO","ALTO SOBRADINHO","BAIRRO DO SÃO BENEDITO",
-    "CAJUEIRO","CENTRO","CIDADE NOVA II","COCÃO","LOTEAMENTO SANTA CECÍLIA",
-    "LOTEAMENTO SALES","MARIA PRETA","MIRANTE DO ANDAIÁ","MUTUM","PROVIDÊNCIA",
-    "RÁDIO CLUBE","SALGADEIRA","SANTA MADALENA","SÃO FRANCISCO","SÃO PAULO",
-    "URBIS I","URBIS II","URBIS III","ZILDA ARNS"
-]
-barrios_jacobina = [
-    "CENTRO","FÉLIX TOMAZ","PERU","MUNDO NOVO","LEADER","MISSÃO","JACOBINA II",
-    "JACOBINA III","JACOBINA IV","JACOBINA V","CATUABA","LAGOA DOURADA",
-    "GROTINHA","CAEIRA","BANANEIRA","NAZARÉ","INOCOOP","ESTAÇÃO","MUTIRÃO",
-    "LADEIRA VERMELHA","LAGOINHA NOVA","LAGOINHA VELHA","BAIRRO DOS ÍNDIOS",
-    "MATRIZ","MORRO DO CRUZEIRO","VILA FELIZ","JACOBINA I"
-]
-empresa = [
-    "LOGGI",
-    "JADLOG", 
-    "SHOPEE",
-    "ANJUN",
-    "SEQUOIA",
-    "IMILE"
-]
-base = [
-    "FEIRA DE SANTANA",
-    "SANTO ANTONIO DE JESUS", 
-    "ALAGOINHAS",  
-    "JACOBINA", 
-    "BAIRROS DE FEIRA DE SANTANA",
-    "BAIRROS DE ALAGOINHAS",
-    "BAIRROS DE JACOBINA",
-    "BAIRROS DE S. A. DE JESUS", 
-    "TRANSFERENCIA", 
-    "DEVOLUÇÃO", 
-    "TODOS AS LOCALIDADES"
-]
-tranferencia = [
-    "PACOTES EM TRATATIVA",
-    "TRANSFERENCIA PARA FEIRA", 
-    "TRANSFERENCIA PARA ALAGOINHAS", 
-    "TRANSFERENCIA PARA JACOBINA",
-    "TRANSFERENCIA PARA S. A. DE JESUS",
-]
-devolucaos = [
-    "DEVOLUÇÃO PARA FEIRA",
-    "DEVOLUÇÃO PARA LOGGI",
-    "DEVOLUÇÃO PARA JADLOG", 
-    "DEVOLUÇÃO PARA SHOPEE",
-    "DEVOLUÇÃO PARA ANJUN",
-    "DEVOLUÇÃO PARA SEQUOIA"
-]
+barrios_saj = data.get("barrios_saj", [])
+barrios_feria = data.get("barrios_feria", [])
+barrios_alagoinhas = data.get("barrios_alagoinhas", [])
+barrios_jacobina = data.get("barrios_jacobina", [])
 
-cidades_algoinhas = [
-    "ALAGOINHAS","ACAJUTIBA","CONDE","CRISÓPOLIS","ENTRE RIOS","ESPLANADA","INHAMBUPE",
-    "ITANAGRA","JANDAÍRA","MATA DE SÃO JOÃO","OURIÇANGAS","RIO REAL","SÁTIRO DIAS",
-    "ARATUÍPE","APORÁ","ARAMARI","ARAÇÁS","CARDEAL DA SILVA","CATU","ITAPICURU",
-    "OLINDINA"
-]
-cidades_saj = [
-    "CONCEIÇÃO DO ALMEIDA","ELÍSIO MEDRADO","ITAPARICA","ITUBERÁ","JIQUIRIÇÁ","LAJE",
-    "MUNIZ FERREIRA","MUTUÍPE","NILO PEÇANHA","SANTO ANTÔNIO DE JESUS",
-    "SÃO MIGUEL DAS MATAS","UBAÍRA","VALENÇA","VARZEDO","DOM MACEDO COSTA","ITAQUARA",
-    "NAZARÉ","TAPEROÁ","TEOLÂNDIA","IGRAPIÚNA","JAGUARIPE","AMARGOSA","CRAVOLÂNDIA",
-    "GANDU","NOVA IBIÁ","PRESIDENTE TANCREDO NEVES","SALINAS DA MARGARIDA","SANTA INÊS",
-    "VERA CRUZ","WENCESLAU GUIMARÃES"
-]
-cidades_jacobina = [
-    "CAÉM","MIGUEL CALMON","SERROLÂNDIA","VÁRZEA DO POÇO",
-    "VÁRZEA NOVA","JACOBINA"
-]
+devolucaos = data.get("devolucaos", [])
+empresa = data.get("empresa", [])
+base = data.get("base", [])
+tranferencia = data.get("tranferencia", [])
 
 allLocate = barrios_feria + barrios_alagoinhas + barrios_jacobina + cidades_feira + cidades_algoinhas + cidades_jacobina + cidades_saj + barrios_saj + devolucaos + tranferencia
 
@@ -564,21 +475,21 @@ class MouseCoordinateApp(QWidget):
                 formatted_code = now.strftime("RTA%Y%m%d%H%M%S%f")[:-3] + "LC"
                 self.messagem.setText(f"Salvando...")
                 self.messagem.setStyleSheet("font-weight: bold; color: blue;")
-                locate = ",Entregador "
+                locate = ", Entregador "
                 if self.cidade_label.text() == "Local:":
-                    locate = ",Destino "
+                    locate = ", Destino "
                 
                 file_path, _ = QFileDialog.getSaveFileName(
                     self,
                     "Salvar Lista",
-                    formatted_code + locate + self.entregador_input.text().upper(),
+                    formatted_code + locate + self.entregador_input.text().upper() + ", " +now.strftime("%d-%m-%Y"),
                     "PDF Files (*.pdf);;All Files (*)",
                     options=options,
                 )
                 if file_path:
                     c = canvas.Canvas(file_path, pagesize=letter)
                     now = datetime.datetime.now()
-                    formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
+                    formatted_now = now.strftime("%d-%m-%Y %H:%M:%S")
                     folder_date = now.strftime("%d-%m-%Y")
                     folder_name = self.combo_box.button.text().upper()
                     folder_first = self.base_combo_box.currentText().upper()
@@ -641,7 +552,7 @@ class MouseCoordinateApp(QWidget):
                     c.save()
                     
                     try:
-                        with open('service-account-credentials.json') as json_file:
+                        with open('Data/service-account-credentials.json') as json_file:
                             data = json.load(json_file)
                             service_account_info = data['google_service_account']
                             firebase_credentials = data['firebase']
@@ -698,7 +609,8 @@ class MouseCoordinateApp(QWidget):
                             first_subfolder_id = find_or_create_folder(folder_first, folder_zero_id)
                             second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
                         else:
-                            second_subfolder_id = find_or_create_folder(folder_name, folder_zero_id)
+                            first_subfolder_id = find_or_create_folder("INTERIOR DE " + folder_first, folder_zero_id)
+                            second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
 
                         file_metadata = {
                             "name": os.path.basename(file_path),
