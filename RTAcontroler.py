@@ -1,4 +1,5 @@
 import sys
+import winsound
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QMessageBox, QComboBox
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -48,7 +49,7 @@ tipo = "Rota"
 class FirebaseApp(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        
         self.setWindowTitle("RTA controler")
         self.setGeometry(100, 100, 600, 400)
 
@@ -75,7 +76,6 @@ class FirebaseApp(QMainWindow):
         layout.addLayout(self.layout_cidade)
         self.combo_box.currentIndexChanged.connect(self.on_cidade_selected)
 
-        
         self.label = QLabel("Documentos na coleção:")
         layout.addWidget(self.label)
 
@@ -113,7 +113,7 @@ class FirebaseApp(QMainWindow):
         self.direciona_button.clicked.connect(self.direciona_pacotes)
         tempo_layout_base.addWidget(self.direciona_button)
         
-        self.libera_button = QPushButton("Liberar ocorrencia")
+        self.libera_button = QPushButton("Liberar ocorrência")
         self.libera_button.clicked.connect(self.liberar)
         tempo_layout_base.addWidget(self.libera_button)
 
@@ -121,14 +121,18 @@ class FirebaseApp(QMainWindow):
         self.remover_direciona_button.clicked.connect(self.remover_direciona_pacotes)
         tempo_layout_base.addWidget(self.remover_direciona_button)
 
-        
+        # Novo campo de texto para inserir o doc_id
+        self.doc_id_input = QLineEdit()
+        self.doc_id_input.setPlaceholderText("Digite / Bipe o RTX e pressione Enter")
+        self.doc_id_input.returnPressed.connect(self.direciona_pacote_por_doc_id)
+        layout.addWidget(self.doc_id_input)
+
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão Beta 1.5.3")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão Prototipo 0.0.1.3")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
         layout.addLayout(self.ceos_label_layout)
-        
         
         self.remover_direciona_button.setEnabled(False)
         self.libera_button.setEnabled(False)
@@ -337,7 +341,43 @@ class FirebaseApp(QMainWindow):
                 print(f"Erro ao buscar documento: {e}")
         else:
             self.documents()
-            
+    def direciona_pacote_por_doc_id(self):
+        doc_id = self.doc_id_input.text()
+        if doc_id:
+            motorista = self.combo_box_entregador.currentText()
+            motorista_ref = db.collection('usuarios').where('nome', '==', motorista).limit(1).stream()
+            motorista_doc = next(motorista_ref, None)
+            if motorista_doc:
+                motorista_uid = motorista_doc.id
+                try:    
+                    original_doc_ref = db.collection('bipagem').document(doc_id)
+                    original_doc_snapshot = original_doc_ref.get()
+
+                    if not original_doc_snapshot.exists:
+                        winsound.Beep(855, 350)
+                        self.doc_id_input.clear() 
+                        return
+
+                    original_doc_data = original_doc_snapshot.to_dict()
+                    new_doc_ref = db.collection('direcionado').document(motorista_uid).collection('pacotes').document(doc_id)
+                    new_doc_ref.set(original_doc_data)
+                    db.collection('direcionado').document(motorista_uid).collection('pacotes').document(doc_id).update({'Motorista': motorista_uid})
+                    original_doc_ref.delete()
+                    winsound.Beep(1755, 150)
+                    self.doc_id_input.clear() 
+                    global tipo
+                    if tipo == "Status":
+                        self.remove_documents()
+                    else:
+                        self.load_documents()
+
+                except Exception as e:
+                    QMessageBox.critical(self, "Erro", f"Erro ao direcionar pacotes: {e}")
+            else:
+                QMessageBox.warning(self, "Atenção", "Motorista não encontrado.")
+        else:
+            QMessageBox.warning(self, "Atenção", "Por favor, insira um ID de documento para direcionar.")
+        self.doc_id_input.clear()
     def direciona_pacotes(self):
         selected_items = self.list_widget.selectedItems()
         if selected_items:
