@@ -18,7 +18,9 @@ from firebase_admin import credentials, firestore
 from PyQt5.QtCore import Qt
 import json
 import textwrap
-
+from PyQt5.QtWidgets import QListWidgetItem
+from PyQt5.QtCore import Qt
+import webbrowser
 
 with open("service-account-credentials.json") as json_file:
     data = json.load(json_file)
@@ -139,6 +141,8 @@ class FirebaseApp(QMainWindow):
         # Document List
         self.list_widget = QListWidget()
         self.list_widget.setSelectionMode(QListWidget.MultiSelection)
+        self.item_links = {}  # Dicionário para armazenar links dos itens
+        self.list_widget.itemDoubleClicked.connect(self.on_item_double_clicked)
         layout.addWidget(self.list_widget)
 
         # Delivery Details
@@ -268,6 +272,7 @@ class FirebaseApp(QMainWindow):
         query_text = self.search_input.text()
         self.search_input.clear()
         self.list_widget.clear()
+        self.item_links.clear()  # Limpar links antigos
 
         if query_text:
             try:
@@ -292,24 +297,20 @@ class FirebaseApp(QMainWindow):
                             doc = doc_ref.get()
                             if doc.exists:
                                 data = doc.to_dict()
-                                quantidade = data.get(
-                                    "Quantidade", "Campo não encontrado"
-                                )
+                                quantidade = data.get("Quantidade", "Campo não encontrado")
                                 cidade = data.get("Local", "Campo não encontrado")
-                                hora_dia = data.get(
-                                    "Hora_e_Dia", "Campo não encontrado"
-                                )
+                                hora_dia = data.get("Hora_e_Dia", "Campo não encontrado")
                                 status = data.get("Status", "Campo não encontrado")
+                                download_link = data.get("Download_link", "#")  # Pega o link, se existir
                                 motorista_doc = usuarios_collection.document(
                                     motorista_id
                                 ).get()
-                                motorista_nome = motorista_doc.to_dict().get(
-                                    "nome", "Nome não encontrado"
-                                )
+                                motorista_nome = motorista_doc.to_dict().get("nome", "Nome não encontrado")
                                 campo_valor = f"Local: {cidade}  \n{quantidade}\nData e Hora: {hora_dia}\nStatus: {status}\nMotorista: {motorista_nome}"
-                                self.list_widget.addItem(
-                                    f"ID: {doc.id} \n{campo_valor}"
-                                )
+                                item_text = f"ID: {doc.id} \n{campo_valor}"
+                                item = QListWidgetItem(item_text)
+                                self.list_widget.addItem(item)
+                                self.item_links[item_text] = download_link
                                 found = True
                                 break
                     else:
@@ -320,19 +321,26 @@ class FirebaseApp(QMainWindow):
                             quantidade = data.get("Quantidade", "Campo não encontrado")
                             cidade = data.get("Local", "Campo não encontrado")
                             hora_dia = data.get("Hora_e_Dia", "Campo não encontrado")
+                            download_link = data.get("Download_link", "#")  # Pega o link, se existir
                             campo_valor = f"     Local: {cidade}  \n{quantidade}         Data e Hora: {hora_dia}\n"
-                            self.list_widget.addItem(f"ID: {doc.id}, {campo_valor}")
+                            item_text = f"ID: {doc.id}, {campo_valor}"
+                            item = QListWidgetItem(item_text)
+                            self.list_widget.addItem(item)
+                            self.item_links[item_text] = download_link
                             found = True
                             break
 
                 if not found:
-                    self.list_widget.addItem(
-                        "Documento não encontrado em nenhuma coleção."
-                    )
+                    self.list_widget.addItem("Documento não encontrado em nenhuma coleção.")
             except Exception as e:
                 print(f"Erro ao buscar documento: {e}")
         else:
             self.load_documents()
+    def on_item_double_clicked(self, item):
+        item_text = item.text()
+        link = self.item_links.get(item_text, None)
+        if link and link != "#":
+            webbrowser.open(link)
 
     def load_documents(self):
         global tipo
@@ -350,7 +358,12 @@ class FirebaseApp(QMainWindow):
             doc = doc_ref.get()
             data = doc.to_dict()
             for key, value in data.items():
-                self.list_widget.addItem(f"{key}: {value}")
+                drive_link = f"https://drive.google.com/drive/u/2/search?q={key}.png"
+                item_text = f"{key}: {value} \nLink: {drive_link}"
+                self.list_widget.addItem(item_text)
+                item = QListWidgetItem(item_text)
+                self.list_widget.addItem(item)
+                self.item_links[item_text] = drive_link
 
         if self.combo_box.currentText() == "Retirado":
             motorista_uid = motorista_doc.id
@@ -555,7 +568,7 @@ class FirebaseApp(QMainWindow):
                         ).document(doc_id).update({"Motorista": motorista_uid})
                         db.collection("direcionado").document(motorista_uid).collection(
                             "pacotes"
-                        ).document(doc_id).update({"Status": "aguardando retirada"})
+                        ).document(doc_id).update({"Status": "aguardando"})
                         original_doc_ref.delete()
                     winsound.Beep(1755, 350)
                     self.doc_id_input.clear()
