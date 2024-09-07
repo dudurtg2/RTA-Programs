@@ -71,7 +71,7 @@ rota_dict.update({city: "008" for city in tranferencia})
 
 cidades = cidades_feira
 
-rotas = ["001", "002", "003", "004", "005", "006", "008"]
+rotas = ["Todos","001", "002", "003", "004", "005", "006", "008"]
 status = ["Direcionado", "Recusado", "Retirado", "Finalizado", "Ocorrencia"]
 campo = ["Direcionar", "Roterizar"]
 morotista = []
@@ -281,6 +281,9 @@ class FirebaseApp(QMainWindow):
                     item = QListWidgetItem(item_text)
                     self.list_widget.addItem(item)
                     self.item_links[item_text] = download_link
+                    self.direciona_button.setEnabled(True)
+                    self.remover_direciona_button.setEnabled(False)
+                    self.libera_button.setEnabled(False)   
                     found = True
 
                 if not found:
@@ -315,8 +318,10 @@ class FirebaseApp(QMainWindow):
                                 self.item_links[item_text] = download_link
                                 print("Encontrado no Firestore")
                                 found = True
+                                self.direciona_button.setEnabled(False)
+                                self.remover_direciona_button.setEnabled(True)
+                                self.libera_button.setEnabled(False)   
                                 break
-
                     if not found:
                         self.list_widget.addItem("Documento não encontrado em nenhuma coleção.")
 
@@ -392,6 +397,12 @@ class FirebaseApp(QMainWindow):
         elif query_text:
             for doc_id, data in bipagem_data.items():
                 if data.get(tipo) == query_text:
+                    quantidade = data.get("Quantidade", "Campo não encontrado")
+                    cidade = data.get("Local", "Campo não encontrado")
+                    hora_dia = data.get("Hora_e_Dia", "Campo não encontrado")
+                    campo_valor = f"Local: {cidade} \n{quantidade}         Data e Hora: {hora_dia}\n"
+                    self.list_widget.addItem(f"ID: {doc_id}, {campo_valor}")
+                elif query_text == "Todos":
                     quantidade = data.get("Quantidade", "Campo não encontrado")
                     cidade = data.get("Local", "Campo não encontrado")
                     hora_dia = data.get("Hora_e_Dia", "Campo não encontrado")
@@ -579,11 +590,18 @@ class FirebaseApp(QMainWindow):
                         original_doc_snapshot = original_doc_ref.get()
                         if original_doc_snapshot.exists:
                             original_doc_data = original_doc_snapshot.to_dict()
-                            new_doc_ref = db.collection("rota").document(motorista_uid).collection("pacotes").document(doc_id)
-                            new_doc_ref.set(original_doc_data)
 
-                            new_doc_ref.update({"Motorista": motorista_uid})
-                            new_doc_ref.update({"Status": "Retirado"})
+                            if self.combo_box_Tipo.currentText() == "Direcionar":
+                                new_doc_ref = db.collection("rota").document(motorista_uid).collection("pacotes").document(doc_id)
+                                new_doc_ref.set(original_doc_data)
+                                new_doc_ref.update({"Motorista": motorista_uid})
+                                new_doc_ref.update({"Status": "Retirado"})
+                                
+                            else:
+                                new_doc_ref = db.collection("direcionado").document(motorista_uid).collection("pacotes").document(doc_id)
+                                new_doc_ref.set(original_doc_data)
+                                new_doc_ref.update({"Motorista": motorista_uid})
+                                new_doc_ref.update({"Status": "aguardando"})
 
                             original_doc_ref.delete()
 
