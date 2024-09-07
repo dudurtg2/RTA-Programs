@@ -25,7 +25,10 @@ Com este automatizador, o processo de bipagem de mercadorias se torna mais efici
  - Além disso, este repositório inclui o RTA Controle, um programa que direciona Requisições de Transporte de Acompanhamento (RTAs) para os motoristas responsáveis, otimizando o processo de distribuição de tarefas na transportadora.
 
 # LAYOUT DOS PROGRAMAS
-   ![image](https://github.com/user-attachments/assets/0f81e86b-f078-47ae-9922-b590059375a4)
+ ## RTA Bipagem
+   ![image](https://github.com/user-attachments/assets/3acea78f-ae96-4a57-a81c-173514c91a07)
+ ## RTA Controle
+   ![image](https://github.com/user-attachments/assets/7d02b84e-8449-4677-b53c-c4f21bbc6f5d)
 
 
 
