@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import QListWidgetItem
 from PyQt5.QtCore import Qt
 import webbrowser
 
-with open("service-account-credentials.json") as json_file:
+with open("Data/service-account-credentials.json") as json_file:
     data = json.load(json_file)
     firebase_credentials = data["firebase"]
 
@@ -172,10 +172,10 @@ class FirebaseApp(QMainWindow):
         self.remover_direciona_button.setEnabled(False)
         self.libera_button.setEnabled(False)
         self.direciona_button.setEnabled(True)
-        if not os.path.isfile("bipagem_data.json"):
+        if not os.path.isfile("Data/bipagem_data.json"):
             self.baixar_bipagem_para_json()
         else:
-            print("Arquivo 'bipagem_data.json' encontrado.")
+            print("Arquivo 'Data/bipagem_data.json' encontrado.")
             self.load_documents()
         self.users()
 
@@ -260,7 +260,7 @@ class FirebaseApp(QMainWindow):
             try:
 
                 try:
-                    with open("bipagem_data.json", "r") as f:
+                    with open("Data/bipagem_data.json", "r") as f:
                         bipagem_data = json.load(f)
                 except FileNotFoundError:
                     print("Arquivo JSON não encontrado. Baixe os dados primeiro.")
@@ -269,7 +269,7 @@ class FirebaseApp(QMainWindow):
                 found = False
 
                 if query_text in bipagem_data:
-                    print("Encontrado em 'bipagem_data.json'")
+                    print("Encontrado em 'Data/bipagem_data.json'")
                     data = bipagem_data[query_text]
                     quantidade = data.get("Quantidade", "Campo não encontrado")
                     cidade = data.get("Local", "Campo não encontrado")
@@ -344,10 +344,10 @@ class FirebaseApp(QMainWindow):
         for doc in docs:
             bipagem_data[doc.id] = doc.to_dict()
 
-        with open("bipagem_data.json", "w") as f:
+        with open("Data/bipagem_data.json", "w") as f:
             json.dump(bipagem_data, f, indent=4)
 
-        print("Dados de 'bipagem' baixados e salvos em 'bipagem_data.json'.")
+        print("Dados de 'bipagem' baixados e salvos em 'Data/bipagem_data.json'.")
         self.load_documents()
 
     def load_documents(self):
@@ -357,7 +357,7 @@ class FirebaseApp(QMainWindow):
         motorista = self.combo_box_entregador.currentText()
 
         try:
-            with open("bipagem_data.json", "r") as f:
+            with open("Data/bipagem_data.json", "r") as f:
                 bipagem_data = json.load(f)
         except FileNotFoundError:
             print("Arquivo JSON não encontrado. Baixe os dados primeiro.")
@@ -526,7 +526,7 @@ class FirebaseApp(QMainWindow):
                     original_doc_data = original_doc_snapshot.to_dict()
 
                     try:
-                        with open("bipagem_data.json", "r") as f:
+                        with open("Data/bipagem_data.json", "r") as f:
                             bipagem_data = json.load(f)
                     except FileNotFoundError:
                         bipagem_data = {}
@@ -547,7 +547,7 @@ class FirebaseApp(QMainWindow):
                     if doc_id in bipagem_data:
                         del bipagem_data[doc_id]
 
-                    with open("bipagem_data.json", "w") as f:
+                    with open("Data/bipagem_data.json", "w") as f:
                         json.dump(bipagem_data, f, indent=4)
 
                     winsound.Beep(1755, 350)
@@ -580,7 +580,7 @@ class FirebaseApp(QMainWindow):
 
                 try:
                     try:
-                        with open("bipagem_data.json", "r") as f:
+                        with open("Data/bipagem_data.json", "r") as f:
                             bipagem_data = json.load(f)
                     except FileNotFoundError:
                         bipagem_data = {}
@@ -608,7 +608,7 @@ class FirebaseApp(QMainWindow):
                             if doc_id in bipagem_data:
                                 del bipagem_data[doc_id]
 
-                    with open("bipagem_data.json", "w") as f:
+                    with open("Data/bipagem_data.json", "w") as f:
                         json.dump(bipagem_data, f, indent=4)
 
                     QMessageBox.information(
@@ -653,7 +653,7 @@ class FirebaseApp(QMainWindow):
 
                 try:
                     try:
-                        with open("bipagem_data.json", "r") as f:
+                        with open("Data/bipagem_data.json", "r") as f:
                             bipagem_data = json.load(f)
                     except FileNotFoundError:
                         bipagem_data = {}
@@ -676,7 +676,7 @@ class FirebaseApp(QMainWindow):
 
                             original_doc_ref.delete()
 
-                    with open("bipagem_data.json", "w") as f:
+                    with open("Data/bipagem_data.json", "w") as f:
                         json.dump(bipagem_data, f, indent=4)
 
                     QMessageBox.information(
@@ -707,7 +707,7 @@ class FirebaseApp(QMainWindow):
             doc_ids = [item.text().split(",")[0].split(":")[1].strip() for item in selected_items]
             try:
                 try:
-                    with open("bipagem_data.json", "r") as f:
+                    with open("Data/bipagem_data.json", "r") as f:
                         bipagem_data = json.load(f)
                 except FileNotFoundError:
                     QMessageBox.warning(self, "Atenção", "Arquivo JSON não encontrado.")
@@ -720,7 +720,7 @@ class FirebaseApp(QMainWindow):
                         del bipagem_data[doc_id]
                         print(f"Documento {doc_id} deletado do JSON.")
 
-                with open("bipagem_data.json", "w") as f:
+                with open("Data/bipagem_data.json", "w") as f:
                     json.dump(bipagem_data, f, indent=4)
 
                 QMessageBox.information(self, "Sucesso", "Documentos deletados com sucesso.")
