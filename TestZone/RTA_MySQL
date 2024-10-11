@@ -1,0 +1,119 @@
+import json
+import psycopg2
+from datetime import datetime
+
+# Conectar ao PostgreSQL
+db = psycopg2.connect(
+    host="shallowly-accepted-coatimundi.data-1.use1.tembo.io",
+    port="5432",
+    user="postgres",
+    password="ivYWDNk0GCJFPtGb",
+    database="postgres"
+)
+
+cursor = db.cursor()
+
+# Função para unificar os formatos de data
+def formatar_data(hora_e_dia):
+    try:
+        # Tenta converter para o formato YYYY-MM-DD HH:MM:SS
+        data_formatada = datetime.strptime(hora_e_dia, '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        try:
+            # Tenta converter para o formato DD-MM-YYYY HH:MM:SS e reformatar
+            data_formatada = datetime.strptime(hora_e_dia, '%d-%m-%Y %H:%M:%S')
+        except ValueError:
+            print(f"Erro ao processar a data: {hora_e_dia}")
+            return None
+    return data_formatada.strftime('%Y-%m-%d %H:%M:%S')
+
+# Função para criar as tabelas no PostgreSQL
+def create_tables(cursor):
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS pacotes (
+        codigo_de_ficha VARCHAR(50) NOT NULL PRIMARY KEY,
+        fim VARCHAR(20),
+        download_link VARCHAR(255),
+        hora_e_dia TIMESTAMP,
+        status VARCHAR(20),
+        motorista VARCHAR(50),
+        funcionario VARCHAR(50),
+        quantidade INT,
+        local VARCHAR(100),
+        entregador VARCHAR(50),
+        rota VARCHAR(10),
+        inicio VARCHAR(20),
+        empresa VARCHAR(50)
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS codigos_inseridos (
+        id SERIAL PRIMARY KEY,
+        codigo_de_ficha VARCHAR(50) NOT NULL,
+        codigo_inserido VARCHAR(50),
+        FOREIGN KEY (codigo_de_ficha) REFERENCES pacotes(codigo_de_ficha)
+    );
+    """)
+    db.commit()
+
+# Função para inserir dados no PostgreSQL
+def inserir_dados_postgres(dados_pacote):
+    codigo_de_ficha = dados_pacote["Codigo_de_ficha"]
+    
+    # Inserir na tabela 'pacotes'
+    sql_pacotes = """
+    INSERT INTO pacotes (codigo_de_ficha, fim, download_link, hora_e_dia, status, motorista, funcionario, quantidade, local, entregador, rota, inicio, empresa)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    values_pacotes = (
+        dados_pacote["Codigo_de_ficha"], dados_pacote["Fim"], dados_pacote["Download_link"],
+        dados_pacote["Hora_e_Dia"], dados_pacote["Status"], dados_pacote["Motorista"],
+        dados_pacote["Funcionario"], int(dados_pacote["Quantidade"].replace('Quantidade: ', '')),  # Extrai o número de "Quantidade: "
+        dados_pacote["Local"], dados_pacote["Entregador"], dados_pacote["Rota"],
+        dados_pacote["Inicio"], dados_pacote["Empresa"]
+    )
+    
+    cursor.execute(sql_pacotes, values_pacotes)
+    db.commit()
+    print(f"Dados inseridos com sucesso para {dados_pacote['Codigo_de_ficha']}!")
+
+    # Inserir na tabela 'codigos_inseridos'
+    for codigo in dados_pacote["Codigos inseridos"]:
+        sql_codigos = """
+        INSERT INTO codigos_inseridos (codigo_de_ficha, codigo_inserido) 
+        VALUES (%s, %s)
+        """
+        cursor.execute(sql_codigos, (codigo_de_ficha, codigo))
+    
+    db.commit()
+    print(f"Códigos inseridos para {dados_pacote['Codigo_de_ficha']}!")
+
+# Função principal para processar o arquivo JSON e inserir no banco
+def processar_json(json_file):
+    with open(json_file, 'r') as f:
+        data = json.load(f)
+    
+    for codigo_ficha, dados_pacote in data.items():
+        # Adiciona o código de ficha ao dicionário
+        dados_pacote["Codigo_de_ficha"] = codigo_ficha
+        
+        # Formata a data
+        dados_pacote["Hora_e_Dia"] = formatar_data(dados_pacote["Hora_e_Dia"])
+        
+        # Se a data foi formatada corretamente, faz a inserção no PostgreSQL
+        if dados_pacote["Hora_e_Dia"]:
+            inserir_dados_postgres(dados_pacote)
+        else:
+            print(f"Erro na formatação da data para {codigo_ficha}. Inserção não realizada.")
+
+# Caminho para o arquivo JSON
+json_file = 'Data/bipagem_data.json'
+
+# Criar as tabelas e processar o JSON
+create_tables(cursor)
+processar_json(json_file)
+
+# Fechar a conexão com o banco de dados
+cursor.close()
+db.close()
