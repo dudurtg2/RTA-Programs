@@ -79,12 +79,28 @@ rota_dict.update({city: '005' for city in rota_05})
 rota_dict.update({city: '006' for city in rota_06})
 rota_dict.update({city: '008' for city in tranferencia})
 
+keyFolderFSA = data.get("KEYS_FSA")
+keyFolderALG = data.get("KEYS_ALG")
+keyFolderSAJ = data.get("KEYS_SAJ")
+keyFolderJAC = data.get("KEYS_JAC")
+keyFolderDEV = data.get("KEYS_DEV")
+
+keyFolderDefault = keyFolderFSA
+
+print(keyFolderDefault)
+print(keyFolderFSA)
+print(keyFolderALG)
+print(keyFolderSAJ)
+print(keyFolderJAC)
+print(keyFolderDEV)
+
 cidades = cidades_feira
 
 class MultiSelectDialog(QDialog):
     def __init__(self, items):
         super().__init__()
         self.setWindowTitle('Local')
+        
 
         self.layout = QVBoxLayout()
         self.search_box = QLineEdit()
@@ -323,7 +339,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.9.0")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.10.1")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -348,23 +364,27 @@ class MouseCoordinateApp(QWidget):
     
     def on_base_selected(self, index):
         base_selecionada = self.base_combo_box.currentText()
+        global keyFolderDefault
 
         base_mapping = {
-            "ALAGOINHAS": (cidades_algoinhas, "Cidade:"),
-            "JACOBINA": (cidades_jacobina, "Cidade:"),
-            "SANTO ANTONIO DE JESUS": (cidades_saj, "Cidade:"),
-            "FEIRA DE SANTANA": (cidades_feira, "Cidade:"),
-            "DEVOLUÇÃO": (devolucaos, "Local:"),
-            "TRANSFERENCIA": (tranferencia, "Local:"),
-            "BAIRROS DE FEIRA DE SANTANA": (barrios_feria, "Bairros:"),
-            "BAIRROS DE ALAGOINHAS": (barrios_alagoinhas, "Bairros:"),
-            "BAIRROS DE S. A. DE JESUS": (barrios_saj, "Bairros:"),
-            "BAIRROS DE JACOBINA": (barrios_saj, "Bairros:"),
-            "TODOS AS LOCALIDADES": (allLocate, "Bairros, Cidades, Locais:"),
+            "ALAGOINHAS": (cidades_algoinhas, "Cidade:", keyFolderALG),
+            "JACOBINA": (cidades_jacobina, "Cidade:", keyFolderJAC),
+            "SANTO ANTONIO DE JESUS": (cidades_saj, "Cidade:" , keyFolderSAJ),
+            "FEIRA DE SANTANA": (cidades_feira, "Cidade:", keyFolderFSA),
+            "DEVOLUÇÃO": (devolucaos, "Devolução:", keyFolderDEV),
+            "TRANSFERENCIA": (tranferencia, "Local:", keyFolderDEV),
+            "BAIRROS DE FEIRA DE SANTANA": (barrios_feria, "Bairros:", keyFolderFSA),
+            "BAIRROS DE ALAGOINHAS": (barrios_alagoinhas, "Bairros:", keyFolderALG),
+            "BAIRROS DE S. A. DE JESUS": (barrios_saj, "Bairros:", keyFolderSAJ),
+            "BAIRROS DE JACOBINA": (barrios_saj, "Bairros:", keyFolderJAC),
+            "TODOS AS LOCALIDADES": (allLocate, "Bairros, Cidades, Locais:", keyFolderFSA),
         }
-
+        
         if base_selecionada in base_mapping:
-            cidades_list, label_text = base_mapping[base_selecionada]
+            cidades_list, label_text, keyFolder = base_mapping[base_selecionada]
+
+            keyFolderDefault = keyFolder
+
             self.atualizar_cidades(sorted(cidades_list))
             self.cidade_label.setText(label_text)
 
@@ -476,7 +496,7 @@ class MouseCoordinateApp(QWidget):
                 self.messagem.setText(f"Salvando...")
                 self.messagem.setStyleSheet("font-weight: bold; color: blue;")
                 locate = ", Entregador "
-                if self.cidade_label.text() == "Local:":
+                if self.cidade_label.text() == "Local:" or self.cidade_label.text() == "Devolução:":
                     locate = ", Destino "
                 
                 file_path, _ = QFileDialog.getSaveFileName(
@@ -600,13 +620,21 @@ class MouseCoordinateApp(QWidget):
                                 folder_metadata["parents"] = [parent_id]
                             folder = drive_service.files().create(body=folder_metadata, fields="id").execute()
                             return folder["id"]
+                        
+                    global keyFolderDefault
 
                     try:
-                        main_folder_id = find_or_create_folder(folder_date, "15K7K7onfz98E2UV31sFHWIQf7RGWhApV")
+                        main_folder_id = find_or_create_folder(folder_date, keyFolderDefault)
                         folder_zero_id = find_or_create_folder(folder_zero, main_folder_id)
                         
                         if self.cidade_label.text() == "Bairros:":
                             first_subfolder_id = find_or_create_folder(folder_first, folder_zero_id)
+                            second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
+                        elif self.cidade_label.text() == "Local:":
+                            first_subfolder_id = find_or_create_folder("TRANSFERENCIA PARA " + folder_first, folder_zero_id)
+                            second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
+                        elif self.cidade_label.text() == "Devolução:":
+                            first_subfolder_id = find_or_create_folder("DEVOLUÇÃO PARA " + folder_first, folder_zero_id)
                             second_subfolder_id = find_or_create_folder(folder_name, first_subfolder_id)
                         else:
                             first_subfolder_id = find_or_create_folder("INTERIOR DE " + folder_first, folder_zero_id)
