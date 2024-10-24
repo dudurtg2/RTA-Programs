@@ -98,13 +98,13 @@ with open(json_file_path, 'r', encoding='utf-8') as file:
 
 items = [deliverer['fullName'] for deliverer in data['deliverer']]
 numbers = [deliverer['mobileNumber'] for deliverer in data['deliverer']]
+entregador = ""
 
 class MultiSelectDialog(QDialog):
     def __init__(self, items):
         super().__init__()
         self.setWindowTitle('Local')
         
-
         self.layout = QVBoxLayout()
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText('Pesquisar...')
@@ -784,7 +784,12 @@ class MouseCoordinateApp(QWidget):
                             self.messagem.setText(f"Erro ao enviar arquivo para o Google Drive:\n {e}")
                             self.messagem.setStyleSheet("font-weight: bold; color: red;")
                             return
-
+                        
+                        if estado_ligado:
+                            self.entregador = self.entregador_input.text()
+                        else:
+                            self.entregador = drive_items[0]
+                        
                         try:
                             if rota == None:
                                 rota = 'base'
@@ -792,11 +797,11 @@ class MouseCoordinateApp(QWidget):
                                 db.collection('bipagem').document(formatted_code).set({
                                     'Empresa': self.empresa_box.currentText(),
                                     'Funcionario': self.nome_input.text(),
-                                    'Entregador': self.entregador_input.text(),
+                                    'Entregador': self.entregador,
                                     'Local': self.combo_box.button.text().upper(),
                                     'Codigo_de_ficha': formatted_code,
                                     'Hora_e_Dia': formatted_now,
-                                    'Quantidade': self.counter_label.text(),
+                                    'Quantidade': self.counter,
                                     'Inicio': "aguardando",
                                     'Fim': "aguardando",
                                     'Status': "aguardando",
