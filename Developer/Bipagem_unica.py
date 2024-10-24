@@ -89,20 +89,11 @@ keyFolderDEV = data.get("KEYS_DEV")
 
 keyFolderDefault = keyFolderFSA
 
+cidades = cidades_feira
+
 json_file_path = 'Data/driveNameNumber.json'
 
 with open(json_file_path, 'r', encoding='utf-8') as file:
-    data = json.load(file)
-
-for deliverer in data.get("deliverer", []):
-    full_name = deliverer.get("fullName")
-    mobile_number = deliverer.get("mobileNumber")
-
-print(full_name, mobile_number)
-
-cidades = cidades_feira
-
-with open("Data/driveNameNumber.json", 'r', encoding='utf-8') as file:
         data = json.load(file)
 
 items = [deliverer['fullName'] for deliverer in data['deliverer']]
@@ -437,7 +428,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.10.1")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.11.9")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
