@@ -556,39 +556,43 @@ class MouseCoordinateApp(QWidget):
         winsound.Beep(int(self.sound_imput.value()) , int(self.sound_temp.value()))
         
     def StartInsertBarCode(self):
-        if ( "pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != ""):
-            barCode = self.entry.text()
-            if len(barCode) < 5:
-                self.messagem.setText( "Código de barras inválido. \nInsira um código com pelo menos 5 caractere." )
-                self.messagem.setStyleSheet("font-weight: bold; color: red;")
-                return
-            if len(barCode) > 55:
-                self.messagem.setText( "Código de barras inválido. \nInsira um código com no maximo 55 caractere." )
-                self.messagem.setStyleSheet("font-weight: bold; color: red;")
-                return
-            
-            if barCode in self.insertedBarCodes:
-                self.entry.clear()
-                self.bring_to_front()
-                winsound.Beep(820, 1000)
-                self.messagem.setText("Código de barras já inserido.")
-                self.messagem.setStyleSheet("font-weight: bold; color: red;")
-                return
+        if ("pos1" in self.positions and "pos2" in self.positions):
+            if (self.entregador_input.text() != "" and estado_ligado == True) or (self.combo_box_drive.button.text() != "Click para selecionar o entregador" and estado_ligado == False):
+                barCode = self.entry.text()
+                if len(barCode) < 5:
+                    self.messagem.setText( "Código de barras inválido. \nInsira um código com pelo menos 5 caractere." )
+                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                    return
+                if len(barCode) > 55:
+                    self.messagem.setText( "Código de barras inválido. \nInsira um código com no maximo 55 caractere." )
+                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                    return
 
-            self.insertedBarCodes.add(barCode)
-            self.SaveBarCode(barCode)
-            
-            InsertBarCode(barCode, *self.positions["pos1"], *self.positions["pos2"], self.tempo1_spinbox.value() / 1000, self.tempo2_spinbox.value() / 1000, self.tempTwo_spinbox.value(), self.tempOne_spinbox.value())
-            
-            self.messagem.setText(f"Codigo de barras inserido com sucesso.")
-            self.messagem.setStyleSheet("font-weight: bold; color: blue;")
-            
-            self.entry.clear()
-            self.sound_success()
-            self.bring_to_front()
-            self.UpdateBarCodeListWidget() 
+                if barCode in self.insertedBarCodes:
+                    self.entry.clear()
+                    self.bring_to_front()
+                    winsound.Beep(820, 1000)
+                    self.messagem.setText("Código de barras já inserido.")
+                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                    return
+
+                self.insertedBarCodes.add(barCode)
+                self.SaveBarCode(barCode)
+
+                InsertBarCode(barCode, *self.positions["pos1"], *self.positions["pos2"], self.tempo1_spinbox.value() / 1000, self.tempo2_spinbox.value() / 1000, self.tempTwo_spinbox.value(), self.tempOne_spinbox.value())
+
+                self.messagem.setText(f"Codigo de barras inserido com sucesso.")
+                self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+
+                self.entry.clear()
+                self.sound_success()
+                self.bring_to_front()
+                self.UpdateBarCodeListWidget() 
+            else: 
+                self.messagem.setText( "Por favor, defina nome e \nentregador antes de iniciar." )
+                self.messagem.setStyleSheet("font-weight: bold; color: red;")
         else: 
-            self.messagem.setText( "Por favor, defina todas as posições, nome e \nentregador antes de iniciar." )
+            self.messagem.setText( "Por favor, defina todas as posições antes de iniciar." )
             self.messagem.setStyleSheet("font-weight: bold; color: red;")
             
     def bring_to_front(self):
