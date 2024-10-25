@@ -453,7 +453,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.10.1")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Digital Versão 2.0")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -666,7 +666,7 @@ class MouseCoordinateApp(QWidget):
                         c.setFont("Helvetica-Bold", title_font_size)
 
                         c.line(70, 765, 540, 765)
-                        c.line(70, 630, 540, 630)
+                        c.line(70, 625, 540, 625)
 
                         c.setFont("Helvetica", default_font_size)
                         c.drawString(70, 750, "Codigo de ficha: " + formatted_code)
@@ -680,18 +680,26 @@ class MouseCoordinateApp(QWidget):
                         c.drawString(70, 690, self.counter_label.text())
                         c.drawString(70, 675, "Dia e hora da bipagem: " + formatted_now)
                         c.drawString(70, 660, "Região: " + self.base_combo_box.currentText())
+
+                        if not estado_ligado:
+                            c.drawString(70, 645, "Numero do entregador: (" + numeros_selecionados[0] + ")")
+                        else:
+                            c.drawString(70, 645, "Numero do entregador: (00000000000)")
+
                         c.setFont("Helvetica", signature_font_size)
-                        c.drawString(70, 635, "Assinatura: ____________________________ Data: __/__/____")
+                        c.drawString(70, 630, "Assinatura: ____________________________ Data: __/__/____")
                         c.setFont("Helvetica", default_font_size)
 
-                        c.drawString(70, 605, self.cidade_label.text() + " " + self.combo_box.button.text().upper())
+                        c.drawString(70, 610, self.cidade_label.text() + " " + self.combo_box.button.text().upper())
                         if not estado_ligado:
-                            c.drawString(300, 605, "Numero do entregador " + numeros_selecionados[0])
-
-
+                            
+                            c.drawString(70, 585, "End: " + addresses[0])
+                        else:
+                            c.drawString(70, 585, "End: Endereco do entregador não definido")
+                        
                         c.setFont("Helvetica", signature_font_size)
-                        c.drawString(300, 585, "Caixas: ______    Sacas: ______")
-                        c.drawString(70, 585, "Codigos inseridos:")
+                        c.drawString(300, 565, "Caixas: ______    Sacas: ______")
+                        c.drawString(70, 565, "Codigos inseridos:")
 
                         c.setFont("Helvetica", default_font_size)
 
@@ -712,7 +720,7 @@ class MouseCoordinateApp(QWidget):
 
                         c.drawImage(ImageReader(qr_buffer), 430, 650, 110, 110)
 
-                        y = 570
+                        y = 550
                         for codigo in self.insertedBarCodes:
                             if y < 50:
                                 c.showPage()
