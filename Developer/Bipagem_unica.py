@@ -41,12 +41,30 @@ from PyQt5.QtWidgets import (
     QScrollArea
 )
 
+def get_resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+json_file_path = get_resource_path('service-account-credentials.json')
+
+with open(json_file_path) as json_file:
+    data = json.load(json_file)
+    service_account_info = data['google_service_account']
+    firebase_credentials = data['firebase']
+
+cred = credentials.Certificate(firebase_credentials)
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
 estado_ligado = False
 
-json_file_path = 'Data/data.json'
-
-with open(json_file_path, 'r', encoding='utf-8') as file:
-    data = json.load(file)
+doc_ref = db.collection('data').document('Lacates')  # ajuste o caminho
+doc = doc_ref.get()
+data = doc.to_dict()
 
 rota_01 = data.get("rota_01", [])
 rota_02 = data.get("rota_02", [])
@@ -91,20 +109,27 @@ keyFolderDefault = keyFolderFSA
 
 cidades = cidades_feira
 
-json_file_path = 'Data/driveNameNumber.json'
+def fetch_deliverers():
+    doc_ref = db.collection('data').document('drivers')  # ajuste o caminho do documento
+    doc = doc_ref.get()
+    if doc.exists:
+        data = doc.to_dict()
+        items = [d['fullName'] for d in data['deliverer']]
+        numbers = [d['mobileNumber'] for d in data['deliverer']]
+        addresses = [d['endereco'] for d in data['deliverer']]
+        return items, numbers, addresses
+    else:
+        return [], [], []
 
-with open(json_file_path, 'r', encoding='utf-8') as file:
-        data = json.load(file)
+items, numbers, addresses = fetch_deliverers()
 
-items = [deliverer['fullName'] for deliverer in data['deliverer']]
-numbers = [deliverer['mobileNumber'] for deliverer in data['deliverer']]
-entregador = ""
 
 class MultiSelectDialog(QDialog):
     def __init__(self, items):
         super().__init__()
         self.setWindowTitle('Local')
         
+
         self.layout = QVBoxLayout()
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText('Pesquisar...')
@@ -428,7 +453,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.11.9")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.10.1")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -698,16 +723,6 @@ class MouseCoordinateApp(QWidget):
                         c.save()
 
                         try:
-                            with open('Data/service-account-credentials.json') as json_file:
-                                data = json.load(json_file)
-                                service_account_info = data['google_service_account']
-                                firebase_credentials = data['firebase']
-                        except Exception as e:
-                            self.messagem.setText(f"Erro ao carregar credenciais: {e}")
-                            self.messagem.setStyleSheet("font-weight: bold; color: red;")
-                            return
-
-                        try:
                             if not firebase_admin._apps:
                                 cred = credentials.Certificate(firebase_credentials)
                                 firebase_admin.initialize_app(cred)
@@ -788,12 +803,7 @@ class MouseCoordinateApp(QWidget):
                             self.messagem.setText(f"Erro ao enviar arquivo para o Google Drive:\n {e}")
                             self.messagem.setStyleSheet("font-weight: bold; color: red;")
                             return
-                        
-                        if estado_ligado:
-                            self.entregador = self.entregador_input.text()
-                        else:
-                            self.entregador = drive_items[0]
-                        
+
                         try:
                             if rota == None:
                                 rota = 'base'
@@ -801,11 +811,11 @@ class MouseCoordinateApp(QWidget):
                                 db.collection('bipagem').document(formatted_code).set({
                                     'Empresa': self.empresa_box.currentText(),
                                     'Funcionario': self.nome_input.text(),
-                                    'Entregador': self.entregador,
+                                    'Entregador': self.entregador_input.text(),
                                     'Local': self.combo_box.button.text().upper(),
                                     'Codigo_de_ficha': formatted_code,
                                     'Hora_e_Dia': formatted_now,
-                                    'Quantidade': self.counter,
+                                    'Quantidade': self.counter_label.text(),
                                     'Inicio': "aguardando",
                                     'Fim': "aguardando",
                                     'Status': "aguardando",
