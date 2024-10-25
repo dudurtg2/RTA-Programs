@@ -114,14 +114,14 @@ def fetch_deliverers():
     doc = doc_ref.get()
     if doc.exists:
         data = doc.to_dict()
-        items = [d['fullName'] for d in data['deliverer']]
+        drivereis = [d['fullName'] for d in data['deliverer']]
         numbers = [d['mobileNumber'] for d in data['deliverer']]
         addresses = [d['endereco'] for d in data['deliverer']]
-        return items, numbers, addresses
+        return drivereis, numbers, addresses
     else:
         return [], [], []
 
-items, numbers, addresses = fetch_deliverers()
+drivereis, numbers, addresses = fetch_deliverers()
 
 
 class MultiSelectDialog(QDialog):
@@ -217,12 +217,14 @@ class MultiSelectDialogDrive(QDialog):
         self.scroll_area.setWidget(self.scroll_content)
 
         self.checkboxes = []
-        self.all_items = items
-        self.all_numbers = numbers  
+        self.all_items = drivereis
+        self.all_numbers = numbers
+        self.all_addresses = addresses  
         
-        for item, number in zip(items, numbers):
+        for item, number, address in zip(drivereis, numbers, addresses):
             checkbox = QCheckBox(item)
-            checkbox.number = number  
+            checkbox.number = number 
+            checkbox.address = address
             self.checkboxes.append(checkbox)
             self.scroll_layout.addWidget(checkbox)
 
@@ -243,9 +245,11 @@ class MultiSelectDialogDrive(QDialog):
     def get_selected_items(self):
         global drive_items
         global numeros_selecionados
+        global addresses_selecionados
     
         numeros_selecionados = [checkbox.number for checkbox in self.checkboxes if checkbox.isChecked()]
         drive_items = [checkbox.text() for checkbox in self.checkboxes if checkbox.isChecked()]
+        addresses_selecionados = [checkbox.address for checkbox in self.checkboxes if checkbox.isChecked()]
         return drive_items
 
 class ComboBoxWithDialogDrive(QWidget):
@@ -453,7 +457,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Digital Versão 2.0")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Digital Versão 2.1")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -693,7 +697,7 @@ class MouseCoordinateApp(QWidget):
                         c.drawString(70, 610, self.cidade_label.text() + " " + self.combo_box.button.text().upper())
                         if not estado_ligado:
                             
-                            c.drawString(70, 585, "End: " + addresses[0])
+                            c.drawString(70, 585, "End: " + addresses_selecionados[0])
                         else:
                             c.drawString(70, 585, "End: Endereco do entregador não definido")
                         
@@ -857,15 +861,11 @@ class MouseCoordinateApp(QWidget):
             self.messagem.setStyleSheet("font-weight: bold; color: red;")
   
     def ResetList(self):
-        global drive_items
-        global numeros_selecionados
         self.insertedBarCodes.clear()
         if not self.cidade_label.text() == "Local:":
             self.entregador_input.clear()
             self.combo_box_drive.button.setText("Click aqui para selecionar o entregador")
-            numeros_selecionados = []
-            drive_items = []
-
+            
         if os.path.exists("insertedBarCodes.txt"): os.remove("insertedBarCodes.txt")
         self.UpdateBarCodeListWidget()
 
