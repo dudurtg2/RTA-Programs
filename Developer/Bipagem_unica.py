@@ -41,12 +41,30 @@ from PyQt5.QtWidgets import (
     QScrollArea
 )
 
+def get_resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+json_file_path = get_resource_path('service-account-credentials.json')
+
+with open(json_file_path) as json_file:
+    data = json.load(json_file)
+    service_account_info = data['google_service_account']
+    firebase_credentials = data['firebase']
+
+cred = credentials.Certificate(firebase_credentials)
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
 estado_ligado = False
 
-json_file_path = 'Data/data.json'
-
-with open(json_file_path, 'r', encoding='utf-8') as file:
-    data = json.load(file)
+doc_ref = db.collection('data').document('Lacates')  # ajuste o caminho
+doc = doc_ref.get()
+data = doc.to_dict()
 
 rota_01 = data.get("rota_01", [])
 rota_02 = data.get("rota_02", [])
@@ -91,13 +109,20 @@ keyFolderDefault = keyFolderFSA
 
 cidades = cidades_feira
 
-json_file_path = 'Data/driveNameNumber.json'
+def fetch_deliverers():
+    doc_ref = db.collection('data').document('drivers')  # ajuste o caminho do documento
+    doc = doc_ref.get()
+    if doc.exists:
+        data = doc.to_dict()
+        items = [d['fullName'] for d in data['deliverer']]
+        numbers = [d['mobileNumber'] for d in data['deliverer']]
+        addresses = [d['endereco'] for d in data['deliverer']]
+        return items, numbers, addresses
+    else:
+        return [], [], []
 
-with open(json_file_path, 'r', encoding='utf-8') as file:
-        data = json.load(file)
+items, numbers, addresses = fetch_deliverers()
 
-items = [deliverer['fullName'] for deliverer in data['deliverer']]
-numbers = [deliverer['mobileNumber'] for deliverer in data['deliverer']]
 
 class MultiSelectDialog(QDialog):
     def __init__(self, items):
@@ -428,7 +453,7 @@ class MouseCoordinateApp(QWidget):
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
-        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.11.9")
+        self.Ceos = QLabel("Github.com/dudurtg2 - Versão 1.10.1")
         self.Ceos.setStyleSheet("color: gray;")
         self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
@@ -556,39 +581,43 @@ class MouseCoordinateApp(QWidget):
         winsound.Beep(int(self.sound_imput.value()) , int(self.sound_temp.value()))
         
     def StartInsertBarCode(self):
-        if ( "pos1" in self.positions and "pos2" in self.positions and self.nome_input.text() != "" and self.entregador_input.text() != ""):
-            barCode = self.entry.text()
-            if len(barCode) < 5:
-                self.messagem.setText( "Código de barras inválido. \nInsira um código com pelo menos 5 caractere." )
-                self.messagem.setStyleSheet("font-weight: bold; color: red;")
-                return
-            if len(barCode) > 55:
-                self.messagem.setText( "Código de barras inválido. \nInsira um código com no maximo 55 caractere." )
-                self.messagem.setStyleSheet("font-weight: bold; color: red;")
-                return
-            
-            if barCode in self.insertedBarCodes:
-                self.entry.clear()
-                self.bring_to_front()
-                winsound.Beep(820, 1000)
-                self.messagem.setText("Código de barras já inserido.")
-                self.messagem.setStyleSheet("font-weight: bold; color: red;")
-                return
+        if ("pos1" in self.positions and "pos2" in self.positions):
+            if (self.entregador_input.text() != "" and estado_ligado == True) or (self.combo_box_drive.button.text() != "Click para selecionar o entregador" and estado_ligado == False):
+                barCode = self.entry.text()
+                if len(barCode) < 5:
+                    self.messagem.setText( "Código de barras inválido. \nInsira um código com pelo menos 5 caractere." )
+                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                    return
+                if len(barCode) > 55:
+                    self.messagem.setText( "Código de barras inválido. \nInsira um código com no maximo 55 caractere." )
+                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                    return
 
-            self.insertedBarCodes.add(barCode)
-            self.SaveBarCode(barCode)
-            
-            InsertBarCode(barCode, *self.positions["pos1"], *self.positions["pos2"], self.tempo1_spinbox.value() / 1000, self.tempo2_spinbox.value() / 1000, self.tempTwo_spinbox.value(), self.tempOne_spinbox.value())
-            
-            self.messagem.setText(f"Codigo de barras inserido com sucesso.")
-            self.messagem.setStyleSheet("font-weight: bold; color: blue;")
-            
-            self.entry.clear()
-            self.sound_success()
-            self.bring_to_front()
-            self.UpdateBarCodeListWidget() 
+                if barCode in self.insertedBarCodes:
+                    self.entry.clear()
+                    self.bring_to_front()
+                    winsound.Beep(820, 1000)
+                    self.messagem.setText("Código de barras já inserido.")
+                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                    return
+
+                self.insertedBarCodes.add(barCode)
+                self.SaveBarCode(barCode)
+
+                InsertBarCode(barCode, *self.positions["pos1"], *self.positions["pos2"], self.tempo1_spinbox.value() / 1000, self.tempo2_spinbox.value() / 1000, self.tempTwo_spinbox.value(), self.tempOne_spinbox.value())
+
+                self.messagem.setText(f"Codigo de barras inserido com sucesso.")
+                self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+
+                self.entry.clear()
+                self.sound_success()
+                self.bring_to_front()
+                self.UpdateBarCodeListWidget() 
+            else: 
+                self.messagem.setText( "Por favor, defina nome e \nentregador antes de iniciar." )
+                self.messagem.setStyleSheet("font-weight: bold; color: red;")
         else: 
-            self.messagem.setText( "Por favor, defina todas as posições, nome e \nentregador antes de iniciar." )
+            self.messagem.setText( "Por favor, defina todas as posições antes de iniciar." )
             self.messagem.setStyleSheet("font-weight: bold; color: red;")
             
     def bring_to_front(self):
@@ -692,16 +721,6 @@ class MouseCoordinateApp(QWidget):
                             y -= 12
 
                         c.save()
-
-                        try:
-                            with open('Data/service-account-credentials.json') as json_file:
-                                data = json.load(json_file)
-                                service_account_info = data['google_service_account']
-                                firebase_credentials = data['firebase']
-                        except Exception as e:
-                            self.messagem.setText(f"Erro ao carregar credenciais: {e}")
-                            self.messagem.setStyleSheet("font-weight: bold; color: red;")
-                            return
 
                         try:
                             if not firebase_admin._apps:
