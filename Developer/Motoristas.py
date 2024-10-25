@@ -4,16 +4,14 @@ from firebase_admin import credentials, firestore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QPushButton, QVBoxLayout, QWidget, QMessageBox, QLineEdit, QLabel, QHBoxLayout
 import json
 import os
-
+from PyQt5.QtCore import Qt
 
 def get_resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
-
     return os.path.join(base_path, relative_path)
-
 
 json_file_path = get_resource_path('service-account-credentials.json')
 
@@ -28,6 +26,9 @@ class DeliverersApp(QMainWindow):
         cred = credentials.Certificate(firebase_credentials)
         firebase_admin.initialize_app(cred)
         self.db = firestore.client()
+        
+        self.deliverers = [] 
+        self.filtered_indices = [] 
 
         self.setWindowTitle("RTA Motoristas")
         self.setGeometry(100, 100, 600, 400)
@@ -42,7 +43,7 @@ class DeliverersApp(QMainWindow):
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["Nome Completo", "Numero de Telefone", "Endereço"])
 
-        self.save_button = QPushButton("Salvas Alterações")
+        self.save_button = QPushButton("Salvar Alterações")
         self.save_button.setStyleSheet("color: blue;")
         self.save_button.clicked.connect(self.save_changes)
 
@@ -56,15 +57,14 @@ class DeliverersApp(QMainWindow):
         self.new_number_input.setPlaceholderText("Número de Telefone")
         self.new_address_input = QLineEdit()
         self.new_address_input.setPlaceholderText("Endereço")
-        self.add_button = QPushButton("Adcionar Entregador")
+        self.add_button = QPushButton("Adicionar Entregador")
         self.add_button.setStyleSheet("color: blue;")
         self.add_button.clicked.connect(self.add_deliverer)
 
         layout = QVBoxLayout()
         search_layout = QHBoxLayout()
-        search_layout.addWidget(QLabel("Search:"))
+        search_layout.addWidget(QLabel("Pesquisar:"))
         search_layout.addWidget(self.search_box)
-        
         
         search_layout.addWidget(self.save_button)
         search_layout.addWidget(self.delete_button) 
@@ -79,6 +79,14 @@ class DeliverersApp(QMainWindow):
 
         layout.addLayout(new_deliverer_layout)
 
+        self.ceos_label_layout = QHBoxLayout()
+        self.Ceos = QLabel("Github.com/dudurtg2 - Digital Versão 1.2")
+        self.Ceos.setStyleSheet("color: gray;")
+        self.ceos_label_layout.addWidget(self.Ceos)
+        self.ceos_label_layout.setAlignment(Qt.AlignRight)
+        
+        layout.addLayout(self.ceos_label_layout)
+
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
@@ -92,8 +100,8 @@ class DeliverersApp(QMainWindow):
         if doc.exists:
             data = doc.to_dict()
             self.deliverers = data['deliverer']
+            self.filtered_indices = list(range(len(self.deliverers)))
             self.populate_table(self.deliverers)
-            self.table.setFocus()
         else:
             QMessageBox.warning(self, "Error", "Entregadores ainda não foram adicionados.")
 
@@ -109,6 +117,8 @@ class DeliverersApp(QMainWindow):
     def filter_table(self):
         search_text = self.search_box.text().lower()
         filtered_deliverers = [d for d in self.deliverers if search_text in d['fullName'].lower()]
+        
+        self.filtered_indices = [i for i, d in enumerate(self.deliverers) if search_text in d['fullName'].lower()]
         self.populate_table(filtered_deliverers)
 
     def add_deliverer(self):
@@ -117,47 +127,52 @@ class DeliverersApp(QMainWindow):
         address = self.new_address_input.text().strip()
 
         if not full_name or not mobile_number or not address:
-            QMessageBox.warning(self, "Input Error", "Por favor, preencha todos os campos.")
+            QMessageBox.warning(self, "Erro de Entrada", "Por favor, preencha todos os campos.")
             return
 
         new_deliverer = {'fullName': full_name, 'mobileNumber': mobile_number, 'endereco': address}
         self.deliverers.append(new_deliverer)
+        self.filtered_indices = list(range(len(self.deliverers)))
         self.populate_table(self.deliverers)
-
+        
         self.new_name_input.clear()
         self.new_number_input.clear()
         self.new_address_input.clear()
-
+        
         QMessageBox.information(self, "Sucesso", "Novo entregador adicionado!")
+        self.save_changes()
 
     def delete_deliverer(self):
         selected_row = self.table.currentRow()
         if selected_row < 0:
-            QMessageBox.warning(self, "Erro de seleção", "Selecione um distribuidor para excluir.")
+            QMessageBox.warning(self, "Erro de Seleção", "Selecione um entregador para excluir.")
             return
-        
+
+        original_index = self.filtered_indices[selected_row] 
         full_name = self.table.item(selected_row, 0).text()
-        mobile_number = self.table.item(selected_row, 1).text()
-
-        confirm = QMessageBox.question(self, "Confirmar exclusão", f"Tem certeza de que deseja excluir {full_name} com o número {mobile_number}?",
+        confirm = QMessageBox.question(self, "Confirmar Exclusão",
+                                       f"Tem certeza de que deseja excluir {full_name}?",
                                        QMessageBox.Yes | QMessageBox.No)
-
         if confirm == QMessageBox.Yes:
-            del self.deliverers[selected_row]
-            self.populate_table(self.deliverers)
+            del self.deliverers[original_index] 
+            self.filter_table() 
+            try:
+                doc_ref = self.db.collection('data').document('drivers')
+                doc_ref.set({'deliverer': self.deliverers})
+            except Exception as e:
+                QMessageBox.warning(self, "Erro", f"Erro ao atualizar o Firestore: {str(e)}")
+                return
             QMessageBox.information(self, "Sucesso", "Entregador excluído com sucesso!")
 
     def save_changes(self):
-        doc_ref = self.db.collection('data').document('drivers')   
-        new_deliverers = []
-
-        for row in range(self.table.rowCount()):
+        doc_ref = self.db.collection('data').document('drivers')
+        for row, original_index in enumerate(self.filtered_indices):
             full_name = self.table.item(row, 0).text() if self.table.item(row, 0) else ''
             mobile_number = self.table.item(row, 1).text() if self.table.item(row, 1) else ''
             address = self.table.item(row, 2).text() if self.table.item(row, 2) else ''
-            new_deliverers.append({'fullName': full_name, 'mobileNumber': mobile_number, 'endereco': address})
-
-        doc_ref.set({'deliverer': new_deliverers})
+            self.deliverers[original_index] = {'fullName': full_name, 'mobileNumber': mobile_number, 'endereco': address}
+        
+        doc_ref.set({'deliverer': self.deliverers})
         QMessageBox.information(self, "Sucesso", "Alterações salvas com sucesso!")
 
 if __name__ == "__main__":
