@@ -41,35 +41,35 @@ from PyQt5.QtWidgets import (
     QScrollArea
 )
 
-Version = "Github.com/dudurtg2 - Digital Versão 2.3"
+Version = "Github.com/dudurtg2 - Digital Versão 2.4"
 
 def get_resource_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
+    try: base_path = sys._MEIPASS
+    except Exception: base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
 json_file_path = get_resource_path('service-account-credentials.json')
 json_offline_file_path = "Data/service-account-credentials.json"
 
-with open(json_offline_file_path) as json_file:
+with open(json_file_path) as json_file:
     data = json.load(json_file)
     service_account_info = data['google_service_account']
     firebase_credentials = data['firebase']
 
 firebase_admin.initialize_app(credentials.Certificate(firebase_credentials))
+
 DATA_BASE = firestore.client()
 
 LOCALES = DATA_BASE.collection('data').document('infoLocale').get().to_dict()
 KEYS = DATA_BASE.collection('data').document('KeyFolderDrive').get().to_dict()
+INFO_ENTERPRISE = DATA_BASE.collection('data').document('InfoBase').get().to_dict()
 INFO_DEFAULT = DATA_BASE.collection('data').document('infoDefault').get().to_dict().get("PRIMARY_LOCALE")
 INFO_BASE = DATA_BASE.collection('data').document('infoDefault').get().to_dict().get("PRIMARY_BASE")
+INFO_DELIVERY = DATA_BASE.collection('data').document('InfoDriver').get()
 
 BASE = []
 KEY_PATH = []
 ALL_LOCALE = []
-
 BASE_MAPPING = {}
 
 for city_name, data in LOCALES.items():
@@ -91,23 +91,11 @@ for city_name, data in LOCALES.items():
 if INFO_BASE in BASE:
     BASE.remove(INFO_BASE)
     BASE.insert(0, INFO_BASE)
-
-INFO = DATA_BASE.collection('data').document('InfoBase').get().to_dict()
-EMPRESA = INFO.get("EMPRESAS-SERVICO", [])
-
-KEYFOLDERDEFAULT = KEYS.get(LOCALES.get(INFO_DEFAULT, {}).get("KEY_PATH"))
-
-print(KEYFOLDERDEFAULT)
-
-SELECTMODE = False
-AVAILABLEFORUPDATE = LOCALES.get(INFO_DEFAULT, {}).get("AVAILABLEFORUPDATE")
-
-print(AVAILABLEFORUPDATE)
+BASE[1:] = sorted(BASE[1:])
 
 def fetch_deliverers():
-    DOC = DATA_BASE.collection('data').document('InfoDriver').get()
-    if DOC.exists:
-        data = DOC.to_dict()
+    if INFO_DELIVERY.exists:
+        data = INFO_DELIVERY.to_dict()
         DELIVERY = [d['fullName'] for d in data['deliverer']]
         PHONE_NUMBER = [d['mobileNumber'] for d in data['deliverer']]
         ADDRESSES = [d['endereco'] for d in data['deliverer']]
@@ -115,9 +103,14 @@ def fetch_deliverers():
     else:
         return [], [], []
 
+EMPRESA = INFO_ENTERPRISE.get("EMPRESAS-SERVICO", [])
+KEYFOLDERDEFAULT = KEYS.get(LOCALES.get(INFO_DEFAULT, {}).get("KEY_PATH"))
+AVAILABLEFORUPDATE = LOCALES.get(INFO_DEFAULT, {}).get("AVAILABLEFORUPDATE")
+SELECT_CITY = LOCALES.get(INFO_DEFAULT, {}).get("LOCALES", [])
+
 DELIVERY, PHONE_NUMBER, ADDRESSES = fetch_deliverers()
 
-SELECT_CITY = LOCALES.get(INFO_DEFAULT, {}).get("LOCALES", [])
+SELECTMODE = False
 
 class MultiSelectDialog(QDialog):
     def __init__(self, items):
@@ -524,23 +517,14 @@ class MouseCoordinateApp(QWidget):
                 widget.setVisible(visible)
 
     def SELECT_BASE_EVENT(self, index):
-
         global KEYFOLDERDEFAULT, AVAILABLEFORUPDATE
         base_selecionada = self.base_combo_box.currentText()
 
         if base_selecionada in BASE_MAPPING:
             cidades_list, label_text, keyFolder, available = BASE_MAPPING[base_selecionada]
 
-            print(f"Selecionou {base_selecionada}")
-            print(f"Chave da pasta: {keyFolder}")
-            print(f"Disponível: {available}")
-            print(f"prefix: {label_text}")
-
             KEYFOLDERDEFAULT = keyFolder
             AVAILABLEFORUPDATE = available
-
-            print(f"KEYFOLDERDEFAULT: {KEYFOLDERDEFAULT}")
-            print(f"AVAILABLEFORUPDATE: {AVAILABLEFORUPDATE}")
 
             self.UPDATE_CITIES_LIST(sorted(cidades_list))
             self.cidade_label.setText(label_text)
