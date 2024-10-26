@@ -50,7 +50,10 @@ def get_resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-with open("Data/service-account-credentials.json") as json_file:
+json_file_path = get_resource_path('service-account-credentials.json')
+json_offline_file_path = "Data/service-account-credentials.json"
+
+with open(json_offline_file_path) as json_file:
     data = json.load(json_file)
     service_account_info = data['google_service_account']
     firebase_credentials = data['firebase']
@@ -64,9 +67,9 @@ CITY_JAC = LOCALES.get("JAC", [])
 CITY_SAJ = LOCALES.get("SAJ", [])
 CITY_FSA = LOCALES.get("FSA", [])
 CITY_SAJ_bairros = LOCALES.get("JAC_bairros", [])
-CITY_FSA_bairros = LOCALES.get("FSA_barrios", [])
-CITY_ALG_bairros = LOCALES.get("ALG_barrios", [])
-CITY_JAC_bairros = LOCALES.get("JAC_barrios", [])
+CITY_FSA_bairros = LOCALES.get("FSA_bairros", [])
+CITY_ALG_bairros = LOCALES.get("ALG_bairros", [])
+CITY_JAC_bairros = LOCALES.get("JAC_bairros", [])
 DEVOLUCAO = LOCALES.get("DEVOLUCAO", [])
 TRANSFERENCIA = LOCALES.get("TRANSFERENCIA", [])
 
@@ -252,7 +255,6 @@ class ComboBoxWithDialogDrive(QWidget):
                 self.selected_item = selected_items[0]
                 self.button.setText(self.selected_item)
             
-        
 class MouseCoordinateApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -272,12 +274,12 @@ class MouseCoordinateApp(QWidget):
 
         self.layout_nome = QHBoxLayout()
         self.nome_label = QLabel("Funcionario:")
-        self.layout_nome.addWidget(self.nome_label)
         self.nome_input = QLineEdit()
+
+        self.layout_nome.addWidget(self.nome_label)
         self.layout_nome.addWidget(self.nome_input)
 
         self.botao_liga_desliga = QPushButton("Digitar", self)
-        self.botao_liga_desliga.clicked.connect(self.TOGGLE_BUTTON_EVENT)
 
         self.layout_nome.addWidget(self.botao_liga_desliga)
         
@@ -285,41 +287,44 @@ class MouseCoordinateApp(QWidget):
         
         self.layout_entregador = QHBoxLayout()
         self.entregador_label = QLabel("Entregador:")
-        self.layout_entregador.addWidget(self.entregador_label)
         self.entregador_input = QLineEdit()
+
+        self.layout_entregador.addWidget(self.entregador_label)
         self.layout_entregador.addWidget(self.entregador_input)
         
         self.layout_drive = QHBoxLayout()
         self.drive_label = QLabel("Entregador:")
         self.combo_box_drive = ComboBoxWithDialogDrive()
+
         self.layout_drive.addWidget(self.combo_box_drive)
 
         self.layout.addLayout(self.layout_entregador)
-    
         self.layout.addLayout(self.layout_drive)
 
         self.layout_empresa = QHBoxLayout()
         self.empresa_label = QLabel("Empresa de bipagem:")
-        self.layout_empresa.addWidget(self.empresa_label)
         self.empresa_box = QComboBox()
         self.empresa_box.addItems(EMPRESA)
+
+        self.layout_empresa.addWidget(self.empresa_label)
         self.layout_empresa.addWidget(self.empresa_box)
         
         self.layout.addLayout(self.layout_empresa)
         
         self.layout_base = QHBoxLayout()
         self.base_label = QLabel("Região de destino:")
-        self.layout_base.addWidget(self.base_label)
         self.base_combo_box = QComboBox()
         self.base_combo_box.addItems(BASE)
+
+        self.layout_base.addWidget(self.base_label)
         self.layout_base.addWidget(self.base_combo_box)
         
         self.layout.addLayout(self.layout_base)
-        self.base_combo_box.currentIndexChanged.connect(self.SELECT_BASE_EVENT)
-        
+         
         self.layout_cidade = QHBoxLayout()
         self.cidade_label = QLabel("Cidade:")
         self.combo_box = ComboBoxWithDialog(sorted(SELECT_CITY))
+
         self.layout_cidade.addWidget(self.combo_box)
         
         self.layout.addLayout(self.layout_cidade)
@@ -332,14 +337,14 @@ class MouseCoordinateApp(QWidget):
         position_layout = QHBoxLayout()
         self.button1 = QPushButton("Definir Posição 1")
         self.button1.setStyleSheet("font-weight: bold; color: red;")
-        self.button1.clicked.connect(lambda: self.SET_POSITION_EVENT("pos1"))
+        
         position_layout.addWidget(self.button1)
         
         self.layout.addLayout(position_layout)
         
         self.button2 = QPushButton("Definir Posição 2")
         self.button2.setStyleSheet("font-weight: bold; color: red;")
-        self.button2.clicked.connect(lambda: self.SET_POSITION_EVENT("pos2"))
+        
         position_layout.addWidget(self.button2)
         
         self.layout.addLayout(position_layout)
@@ -349,42 +354,49 @@ class MouseCoordinateApp(QWidget):
         self.layout.addLayout(tempo_layout)
 
         self.label_tempo1 = QLabel("Tempo de colagem:")
-        tempo_layout.addWidget(self.label_tempo1)
         self.tempo1_spinbox = QSpinBox()
         self.tempo1_spinbox.setRange(0, 5000)
+
+        tempo_layout.addWidget(self.label_tempo1)
         tempo_layout.addWidget(self.tempo1_spinbox)
 
         self.label_tempo2 = QLabel("Tempo de troca:")
-        tempo_layout.addWidget(self.label_tempo2)
         self.tempo2_spinbox = QSpinBox()
         self.tempo2_spinbox.setRange(0, 5000)
+
+        tempo_layout.addWidget(self.label_tempo2)
         tempo_layout.addWidget(self.tempo2_spinbox)
 
         tempo_layout_base = QHBoxLayout()
-        
+
         self.layout.addLayout(tempo_layout_base)
 
         self.label_tempOne = QLabel("Colagem na posicão 1:")
-        tempo_layout_base.addWidget(self.label_tempOne)
         self.tempOne_spinbox = QSpinBox()
         self.tempOne_spinbox.setRange(1, 5)
+
+        tempo_layout_base.addWidget(self.label_tempOne)
         tempo_layout_base.addWidget(self.tempOne_spinbox)
 
         self.label_tempTwo = QLabel("e posicão 2:")
-        tempo_layout_base.addWidget(self.label_tempTwo)
         self.tempTwo_spinbox = QSpinBox()
         self.tempTwo_spinbox.setRange(0, 5)
+
+        tempo_layout_base.addWidget(self.label_tempTwo)
         tempo_layout_base.addWidget(self.tempTwo_spinbox)
 
         self.label = QLabel("Clique no campo abaixo para inserir os códigos:")
         self.label.setStyleSheet("font-weight: bold;")
+
         self.layout.addWidget(self.label)
 
         self.entry = QLineEdit()
+
         self.layout.addWidget(self.entry)
 
         self.counter_label = QLabel("Quantidade: 0")
         self.counter_label.setStyleSheet("font-weight: bold;")
+        
         self.layout.addWidget(self.counter_label)
         
         editList = QHBoxLayout()
@@ -393,32 +405,34 @@ class MouseCoordinateApp(QWidget):
         
         self.delete_button = QPushButton("Delete selecionado")
         self.delete_button.setStyleSheet("color: red;")
-        self.delete_button.clicked.connect(self.DELETE_BARCODE)
-        
+              
         self.layout_search_label = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Digite o codigo para buscar na lista")
-        self.layout_search_label.addWidget(self.search_input)
-        self.search_input.textChanged.connect(self.BARCODE_SEARCH)
+
+        self.layout_search_label.addWidget(self.search_input)      
         
         editList.addLayout(self.layout_search_label)
+
         editList.addWidget(self.delete_button)
 
         self.codigos_list_widget = QListWidget()
+
         self.layout.addWidget(self.codigos_list_widget)
 
         self.AddBarCode_input = QLineEdit()
         self.AddBarCode_input.setPlaceholderText("Insira aqui manualmente o código de barras")
+
         self.layout.addWidget(self.AddBarCode_input)
 
         self.button = QHBoxLayout()
         self.export_button = QPushButton("Exportar Lista")
-        self.button.addWidget(self.export_button)
-        self.export_button.clicked.connect(self.EXPORT_LIST)
 
+        self.button.addWidget(self.export_button)
+        
         self.reset_list_button = QPushButton("Resetar Lista")
+
         self.button.addWidget(self.reset_list_button)
-        self.reset_list_button.clicked.connect(self.RESET_LIST)
 
         self.layout.addLayout(self.button)
         
@@ -427,19 +441,21 @@ class MouseCoordinateApp(QWidget):
         self.layout.addLayout(sound_layout)
         
         self.sound_text = QLabel("Perfil de som:")
-        sound_layout.addWidget(self.sound_text)
         self.sound_imput = QSpinBox()
         self.sound_imput.setRange(100, 9999)
         self.sound_temp = QSpinBox()
         self.sound_temp.setRange(150, 1500)
+
+        sound_layout.addWidget(self.sound_text)
         sound_layout.addWidget(self.sound_imput)
         sound_layout.addWidget(self.sound_temp)
 
         self.ceos_label_layout = QHBoxLayout()
         self.Ceos = QLabel(Version)
         self.Ceos.setStyleSheet("color: gray;")
-        self.ceos_label_layout.addWidget(self.Ceos)
         self.ceos_label_layout.setAlignment(Qt.AlignRight)
+
+        self.ceos_label_layout.addWidget(self.Ceos)
         
         self.layout.addLayout(self.ceos_label_layout)
 
@@ -453,12 +469,23 @@ class MouseCoordinateApp(QWidget):
         self.sound_imput.setValue(1530)
         self.positions = {}
         self.counter = 0
+
+        self.botao_liga_desliga.clicked.connect(self.TOGGLE_BUTTON_EVENT)
+        self.base_combo_box.currentIndexChanged.connect(self.SELECT_BASE_EVENT)
+        self.button1.clicked.connect(lambda: self.SET_POSITION_EVENT("pos1"))
+        self.button2.clicked.connect(lambda: self.SET_POSITION_EVENT("pos2"))
+        self.delete_button.clicked.connect(self.DELETE_BARCODE)
+        self.search_input.textChanged.connect(self.BARCODE_SEARCH)
+        self.export_button.clicked.connect(self.EXPORT_LIST)
+        self.reset_list_button.clicked.connect(self.RESET_LIST)
         self.AddBarCode_input.returnPressed.connect(self.ADD_BARCODE)
         self.entry.returnPressed.connect(self.START_INSERT_EVENT)
+
         self.insertedBarCodes = self.LOAD_BARCODES()
         self.BARCODE_UPDATE_LIST_TABLE()
 
         self.MAKE_WIDGETS_VISIBLE_EVENT(self.layout_entregador, False)
+        
 
     def TOGGLE_BUTTON_EVENT(self):
         global SELECTMODE
@@ -520,28 +547,27 @@ class MouseCoordinateApp(QWidget):
         self.combo_box.button.setText('Click aqui para selecionar o local')
 
     def SET_POSITION_EVENT(self, position):
-        self.messagem.setText("Posicione o mouse e pressione Enter.")
-        self.messagem.setStyleSheet("font-weight: bold; color: blue;")
         self.currently_setting_position = position
 
+        self.MENSAGEM_ALERT("success", "KP_a")
+        
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
             if self.currently_setting_position:
                 x, y = pyautogui.position()
                 self.positions[self.currently_setting_position] = (x, y)
-                if self.currently_setting_position == 'pos1':
-                    self.button1.setText(f"Posição 1: ({x}, {y})")
+
+                if self.currently_setting_position == 'pos1': 
+                    self.button1.setText(f"Posição 1: ({x}, {y})")  
                     self.button1.setStyleSheet("font-weight: bold; color: blue;")
-                elif self.currently_setting_position == 'pos2':
+                elif self.currently_setting_position == 'pos2': 
                     self.button2.setText(f"Posição 2: ({x}, {y})")
                     self.button2.setStyleSheet("font-weight: bold; color: blue;")
+
                 self.currently_setting_position = None
-                if "pos1" in self.positions and "pos2" in self.positions:
-                    self.messagem.setText("Agora realize a inserção do código de barras.")
-                    self.messagem.setStyleSheet("font-weight: bold; color: blue;")
-                else:
-                    self.messagem.setText("Agora defina a proxima posição.")
-                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+
+                if "pos1" in self.positions and "pos2" in self.positions: self.MENSAGEM_ALERT("success", "KP_a")
+                else:  self.MENSAGEM_ALERT("warning", "KP_b")
 
     def LOAD_BARCODES(self):
         insertedBarCodes = set()
@@ -571,21 +597,24 @@ class MouseCoordinateApp(QWidget):
         if ("pos1" in self.positions and "pos2" in self.positions):
             if (self.entregador_input.text() != "" and SELECTMODE == True) or (self.combo_box_drive.button.text() != "Click para selecionar o entregador" and SELECTMODE == False):
                 barCode = self.entry.text()
+
                 if len(barCode) < 5:
-                    self.messagem.setText( "Código de barras inválido. \nInsira um código com pelo menos 5 caractere." )
-                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                    self.MENSAGEM_ALERT("error", "ES_a")
                     return
+                
                 if len(barCode) > 55:
-                    self.messagem.setText( "Código de barras inválido. \nInsira um código com no maximo 55 caractere." )
-                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                    self.MENSAGEM_ALERT("error", "ES_b")
                     return
 
                 if barCode in self.insertedBarCodes:
+
                     self.entry.clear()
-                    self.FOCUS_WINDOWS()
+
+                    ## alerta para MANUTENÇÃO
                     winsound.Beep(820, 1000)
-                    self.messagem.setText("Código de barras já inserido.")
-                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
+
+                    self.FOCUS_WINDOWS()
+                    self.MENSAGEM_ALERT("error", "ES_c")
                     return
 
                 self.insertedBarCodes.add(barCode)
@@ -593,19 +622,16 @@ class MouseCoordinateApp(QWidget):
 
                 INSERT_EVENT(barCode, *self.positions["pos1"], *self.positions["pos2"], self.tempo1_spinbox.value() / 1000, self.tempo2_spinbox.value() / 1000, self.tempTwo_spinbox.value(), self.tempOne_spinbox.value())
 
-                self.messagem.setText(f"Codigo de barras inserido com sucesso.")
-                self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+                self.MENSAGEM_ALERT("success", "ES_d")
 
                 self.entry.clear()
+
                 self.SOUND_SUCCESS()
                 self.FOCUS_WINDOWS()
                 self.BARCODE_UPDATE_LIST_TABLE() 
-            else: 
-                self.messagem.setText( "Por favor, defina nome e \nentregador antes de iniciar." )
-                self.messagem.setStyleSheet("font-weight: bold; color: red;")
-        else: 
-            self.messagem.setText( "Por favor, defina todas as posições antes de iniciar." )
-            self.messagem.setStyleSheet("font-weight: bold; color: red;")
+
+            else: self.MENSAGEM_ALERT("error", "ES_e")
+        else: self.MENSAGEM_ALERT("error", "ES_f")
             
     def FOCUS_WINDOWS(self):
         window = gw.getWindowsWithTitle(self.windowTitle())[0]
@@ -690,8 +716,7 @@ class MouseCoordinateApp(QWidget):
             credentials_drive = service_account.Credentials.from_service_account_info(service_account_info, scopes=["https://www.googleapis.com/auth/drive"])
             drive_service = build("drive", "v3", credentials=credentials_drive)
         except Exception as e:
-            self.messagem.setText(f"Erro ao inicializar Google Drive: {e}")
-            self.messagem.setStyleSheet("font-weight: bold; color: red;")
+            QMessageBox.information(self, "Error", "Erro ao inicializar Google Drive: " + {e})
             return
         def find_or_create_folder(folder_name, parent_id=None):
             query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
@@ -748,12 +773,11 @@ class MouseCoordinateApp(QWidget):
                 'type': 'anyone',
             }
             drive_service.permissions().create(fileId=file_id, body=permission).execute()
-            public_url = f"https://drive.google.com/uc?id={file_id}&export=download"
-
-            return public_url
+            
+            return f"https://drive.google.com/uc?id={file_id}&export=download"
+        
         except Exception as e:
-            self.messagem.setText(f"Erro ao enviar arquivo para o Google Drive:\n {e}")
-            self.messagem.setStyleSheet("font-weight: bold; color: red;")
+            QMessageBox.information(self, "Error", "Erro ao enviar arquivo para o Google Drive:\n " + {e})  
             return     
 
     def UPDATE_FIREBASE(self, formatted_code, formatted_now, public_url):
@@ -765,8 +789,7 @@ class MouseCoordinateApp(QWidget):
             db = firestore.client()
 
         except Exception as e:
-            self.messagem.setText(f"Erro ao inicializar Firebase: {e}")
-            self.messagem.setStyleSheet("font-weight: bold; color: red;")
+            QMessageBox.information(self, "Error", "Erro ao inicializar Firebase: " + {e})
             return
         
         if AVAILABLEFORUPDATE:
@@ -788,8 +811,7 @@ class MouseCoordinateApp(QWidget):
                 })
 
             except Exception as e:
-                self.messagem.setText(f"Erro ao salvar dados no Firestore: {e}")
-                self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                QMessageBox.information(self, "Error", "Erro ao salvar dados no Firestore: " + {e})
                 return
         else:
             pass
@@ -801,12 +823,9 @@ class MouseCoordinateApp(QWidget):
                 if (self.nome_input.text() != ""):
 
                     if(self.combo_box.button.text() == "Click aqui para selecionar o local"):
-                        self.messagem.setText(f"Selecione o local de destino.")
-                        self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                        self.MENSAGEM_ALERT("error", "EL_a")
                         return
-                    
-                    options = QFileDialog.Options()
-
+ 
                     DATE_NOW = datetime.datetime.now()
 
                     formatted_code = DATE_NOW.strftime("RTA%Y%m%d%H%M%S%f")[:-3] + "LC"
@@ -816,45 +835,38 @@ class MouseCoordinateApp(QWidget):
                     folder_first = self.base_combo_box.currentText().upper()
                     folder_zero = self.empresa_box.currentText().upper()
 
-                    self.messagem.setText(f"Salvando...")
-                    self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+                    self.MENSAGEM_ALERT("success", "EL_b")
 
                     locate = ", Entregador "
 
-                    if self.cidade_label.text() == "Local:" or self.cidade_label.text() == "Devolução:":
+                    if self.cidade_label.text() == "Local:" or self.cidade_label.text() == "Devolução:": 
                         locate = ", Destino "
 
                     file_path, _ = QFileDialog.getSaveFileName(
-                        self,
-                        "Salvar Lista",
-                        formatted_code + locate + self.entregador_input.text().upper() + ", " +DATE_NOW.strftime("%d-%m-%Y"),
-                        "PDF Files (*.pdf);;All Files (*)",
-                        options=options,
-                    )
+                            self,
+                            "Salvar Lista",
+                            formatted_code + locate + self.entregador_input.text().upper() + ", " +DATE_NOW.strftime("%d-%m-%Y"),
+                            "PDF Files (*.pdf);;All Files (*)",
+                            options = QFileDialog.Options(),
+                        )
+
                     if file_path:
-                        
                         self.PDF_CREATE(file_path, formatted_now ,formatted_code).save()
                         public_url = self.UPDATE_DRIVER(folder_date, folder_name, folder_first, folder_zero, file_path)
                         self.UPDATE_FIREBASE(formatted_code, formatted_now, public_url)
 
                         QMessageBox.information(self, "Sucesso", f"Romaneio salvo com sucesso.")
-                        self.messagem.setText(f"Insira o proximo entregador e realize as bipagems!")
-                        self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+
+                        self.MENSAGEM_ALERT("success", "EL_c")
 
                         self.RESET_LIST()
 
-                    else:
-                        self.messagem.setText(f"Prossiga com a bipagem normalmente.")
-                        self.messagem.setStyleSheet("font-weight: bold; color: blue;")
-                else:
-                    self.messagem.setText("Por favor, defina seu nome\nantes de exportar.")
-                    self.messagem.setStyleSheet("font-weight: bold; color: red;")
-            else:
-                self.messagem.setText("Por favor, defina o entregador\nantes de exportar.")
-                self.messagem.setStyleSheet("font-weight: bold; color: red;")
-        except Exception as e:
-            self.messagem.setText(f"Erro inesperado: {e}")
-            self.messagem.setStyleSheet("font-weight: bold; color: red;")
+                    else: self.MENSAGEM_ALERT("error", "EL_d")
+                else: self.MENSAGEM_ALERT("error", "EL_e")
+            else: self.MENSAGEM_ALERT("error", "EL_f")
+
+        except Exception as e: 
+            QMessageBox.information(self, "Error", "Erro inesperado: \n" + {e})
   
     def RESET_LIST(self):
         self.insertedBarCodes.clear()
@@ -894,8 +906,8 @@ class MouseCoordinateApp(QWidget):
             self.AddBarCode_input.clear()
             self.FOCUS_WINDOWS()
             winsound.Beep(820, 1000)
-            self.messagem.setText("Código de barras já inserido.")
-            self.messagem.setStyleSheet("font-weight: bold; color: red;")
+
+            self.MENSAGEM_ALERT("error", "AB_a")
             return
         if barCode:
             self.insertedBarCodes.add(barCode)
@@ -904,8 +916,47 @@ class MouseCoordinateApp(QWidget):
             self.SOUND_SUCCESS()
             self.AddBarCode_input.clear()
         else: 
-            self.messagem.setText("Insira um código válido.")
-            self.messagem.setStyleSheet("font-weight: bold; color: red;")
+            self.MENSAGEM_ALERT("error", "AB_b") 
+
+    def MENSAGEM_ALERT(self, alert_type, option):
+        global MENSAGEM_ALERT
+        alert_messages = {
+            # ADD_BARCODE mensagem ==> AB
+            "AB_a": "Código de barras já inserido.",
+            "AB_b": "Insira um código válido.",
+
+            # EXPORT_LIST mensagem ==> EL
+            "EL_a": "Selecione o local de destino.",
+            "EL_b": "Salvando...",
+            "EL_c": "Insira o proximo entregador e realize as bipagems!",
+            "EL_d": "Prossiga com a bipagem normalmente.",
+            "EL_e": "Por favor, defina seu nome\nantes de exportar.",
+            "EL_f": "Por favor, defina o entregador\nantes de exportar.",
+
+            # START_INSERT_EVENT mensagem ==> ES
+            "ES_a": "Código de barras inválido. \nInsira um código com pelo menos 5 caracteres.",
+            "ES_b": "Código de barras inválido. \nInsira um código com no máximo 55 caracteres.",
+            "ES_c": "Código de barras já inserido.",
+            "ES_d": "Código de barras inserido com sucesso.",
+            "ES_e": "Por favor, defina nome e \nentregador antes de iniciar.",
+            "ES_f": "Por favor, defina todas as posições antes de iniciar.",
+
+            # keyPressEvent mensagem ==> KP
+            "KP_a": "Agora realize a inserção do código de barras.",
+            "KP_b": "Agora defina a próxima posição.",
+
+            # SET_POSITION_EVENT mensagem ==> SP
+            "SP_a": "Agora defina a próxima posição."
+        }
+
+        MENSAGEM_ALERT = alert_messages.get(option, "Mensagem não encontrada.")
+
+        self.messagem.setText(MENSAGEM_ALERT)
+
+        if alert_type == "error": self.messagem.setStyleSheet("font-weight: bold; color: red;")
+        elif alert_type == "success":  self.messagem.setStyleSheet("font-weight: bold; color: blue;")
+        else: self.messagem.setStyleSheet("font-weight: bold; color: orange;")
+
 
 def INSERT_EVENT(barCode, x, y, x2, y2, tempo1, tempo2, tempTwo, tempOne):
     positionOne = [(x, y)] * tempOne
