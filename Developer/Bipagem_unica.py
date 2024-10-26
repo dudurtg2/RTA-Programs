@@ -41,7 +41,7 @@ from PyQt5.QtWidgets import (
     QScrollArea
 )
 
-Version = "Github.com/dudurtg2 - Digital Versão 2.2"
+Version = "Github.com/dudurtg2 - Digital Versão 2.3"
 
 def get_resource_path(relative_path):
     try:
@@ -59,41 +59,53 @@ with open(json_offline_file_path) as json_file:
     firebase_credentials = data['firebase']
 
 firebase_admin.initialize_app(credentials.Certificate(firebase_credentials))
-db = firestore.client()
+DATA_BASE = firestore.client()
 
-LOCALES = db.collection('data').document('InfoLocales').get().to_dict()
-CITY_ALG = LOCALES.get("ALG", [])
-CITY_JAC = LOCALES.get("JAC", [])
-CITY_SAJ = LOCALES.get("SAJ", [])
-CITY_FSA = LOCALES.get("FSA", [])
-CITY_SAJ_bairros = LOCALES.get("JAC_bairros", [])
-CITY_FSA_bairros = LOCALES.get("FSA_bairros", [])
-CITY_ALG_bairros = LOCALES.get("ALG_bairros", [])
-CITY_JAC_bairros = LOCALES.get("JAC_bairros", [])
-DEVOLUCAO = LOCALES.get("DEVOLUCAO", [])
-TRANSFERENCIA = LOCALES.get("TRANSFERENCIA", [])
+LOCALES = DATA_BASE.collection('data').document('infoLocale').get().to_dict()
+KEYS = DATA_BASE.collection('data').document('KeyFolderDrive').get().to_dict()
+INFO_DEFAULT = DATA_BASE.collection('data').document('infoDefault').get().to_dict().get("PRIMARY_LOCALE")
+INFO_BASE = DATA_BASE.collection('data').document('infoDefault').get().to_dict().get("PRIMARY_BASE")
 
-INFO = db.collection('data').document('InfoBase').get().to_dict()
+BASE = []
+KEY_PATH = []
+ALL_LOCALE = []
+
+BASE_MAPPING = {}
+
+for city_name, data in LOCALES.items():
+    info_region = data.get("INFO_LOCALE_REGION")
+    info_key = data.get("KEY_PATH")  
+    locais = data.get("LOCALES", [])
+    
+    if info_region:
+        BASE.append(info_region)
+        KEY_PATH.append(info_key)
+
+    key_value = KEYS.get(info_key, None) 
+    available_for_update = data.get("AVAILABLEFORUPDATE", False) 
+
+    BASE_MAPPING[info_region] = (locais, data.get("PREFIX"), key_value, available_for_update)
+
+    ALL_LOCALE.extend(locais)
+
+if INFO_BASE in BASE:
+    BASE.remove(INFO_BASE)
+    BASE.insert(0, INFO_BASE)
+
+INFO = DATA_BASE.collection('data').document('InfoBase').get().to_dict()
 EMPRESA = INFO.get("EMPRESAS-SERVICO", [])
-BASE = INFO.get("BASE", [])
 
-KEYS = db.collection('data').document('KeyFolderDrive').get().to_dict()
-KEY_FSA = KEYS.get("KEYS_FSA")
-KEY_ALG = KEYS.get("KEYS_ALG")
-KEY_SAJ = KEYS.get("KEYS_SAJ")
-KEY_JAC = KEYS.get("KEYS_JAC")
-KEY_DEV = KEYS.get("KEYS_DEV")
+KEYFOLDERDEFAULT = KEYS.get(LOCALES.get(INFO_DEFAULT, {}).get("KEY_PATH"))
 
-SELECT_CITY = CITY_FSA
-ALL_LOCALE = CITY_FSA_bairros + CITY_ALG_bairros + CITY_JAC_bairros + CITY_FSA + CITY_ALG + CITY_JAC + CITY_SAJ + CITY_SAJ_bairros + DEVOLUCAO + TRANSFERENCIA
+print(KEYFOLDERDEFAULT)
 
-KEYFOLDERDEFAULT = KEY_FSA
 SELECTMODE = False
-AVAILABLEFORUPDATE = False
+AVAILABLEFORUPDATE = LOCALES.get(INFO_DEFAULT, {}).get("AVAILABLEFORUPDATE")
+
+print(AVAILABLEFORUPDATE)
 
 def fetch_deliverers():
-    DOC = db.collection('data').document('InfoDriver').get()
-
+    DOC = DATA_BASE.collection('data').document('InfoDriver').get()
     if DOC.exists:
         data = DOC.to_dict()
         DELIVERY = [d['fullName'] for d in data['deliverer']]
@@ -104,6 +116,8 @@ def fetch_deliverers():
         return [], [], []
 
 DELIVERY, PHONE_NUMBER, ADDRESSES = fetch_deliverers()
+
+SELECT_CITY = LOCALES.get(INFO_DEFAULT, {}).get("LOCALES", [])
 
 class MultiSelectDialog(QDialog):
     def __init__(self, items):
@@ -486,7 +500,6 @@ class MouseCoordinateApp(QWidget):
 
         self.MAKE_WIDGETS_VISIBLE_EVENT(self.layout_entregador, False)
         
-
     def TOGGLE_BUTTON_EVENT(self):
         global SELECTMODE
         SELECTMODE = not SELECTMODE
@@ -511,31 +524,23 @@ class MouseCoordinateApp(QWidget):
                 widget.setVisible(visible)
 
     def SELECT_BASE_EVENT(self, index):
+
         global KEYFOLDERDEFAULT, AVAILABLEFORUPDATE
         base_selecionada = self.base_combo_box.currentText()
 
-        base_mapping = {
-            "ALAGOINHAS": (CITY_ALG, "Cidade:", KEY_ALG, True),
-            "JACOBINA": (CITY_JAC, "Cidade:", KEY_JAC, True),
-            "SANTO ANTONIO DE JESUS": (CITY_SAJ, "Cidade:" , KEY_SAJ, True),
-            "FEIRA DE SANTANA": (CITY_FSA, "Cidade:", KEY_FSA, True),
+        if base_selecionada in BASE_MAPPING:
+            cidades_list, label_text, keyFolder, available = BASE_MAPPING[base_selecionada]
 
-            "DEVOLUÇÃO": (DEVOLUCAO, "Devolução:", KEY_DEV, True),
-            "TRANSFERENCIA": (TRANSFERENCIA, "Local:", KEY_DEV, True),
-
-            "BAIRROS DE FEIRA DE SANTANA": (CITY_FSA_bairros, "Bairros:", KEY_FSA, False),
-            "BAIRROS DE ALAGOINHAS": (CITY_ALG_bairros, "Bairros:", KEY_ALG, False),
-            "BAIRROS DE S. A. DE JESUS": (CITY_SAJ_bairros, "Bairros:", KEY_SAJ, False),
-            "BAIRROS DE JACOBINA": (CITY_SAJ_bairros, "Bairros:", KEY_JAC, False),
-
-            "TODOS AS LOCALIDADES": (ALL_LOCALE, "Bairros, Cidades, Locais:", KEY_FSA, True),
-        }
-        
-        if base_selecionada in base_mapping:
-            cidades_list, label_text, keyFolder, AVAILABLE = base_mapping[base_selecionada]
+            print(f"Selecionou {base_selecionada}")
+            print(f"Chave da pasta: {keyFolder}")
+            print(f"Disponível: {available}")
+            print(f"prefix: {label_text}")
 
             KEYFOLDERDEFAULT = keyFolder
-            AVAILABLEFORUPDATE = AVAILABLE
+            AVAILABLEFORUPDATE = available
+
+            print(f"KEYFOLDERDEFAULT: {KEYFOLDERDEFAULT}")
+            print(f"AVAILABLEFORUPDATE: {AVAILABLEFORUPDATE}")
 
             self.UPDATE_CITIES_LIST(sorted(cidades_list))
             self.cidade_label.setText(label_text)
