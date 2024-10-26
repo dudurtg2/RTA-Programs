@@ -50,8 +50,6 @@ def get_resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-#get_resource_path('service-account-credentials.json')
-
 with open("Data/service-account-credentials.json") as json_file:
     data = json.load(json_file)
     service_account_info = data['google_service_account']
@@ -91,7 +89,7 @@ SELECTMODE = False
 AVAILABLEFORUPDATE = False
 
 def fetch_deliverers():
-    DOC = db.collection('data').document('drivers').get()
+    DOC = db.collection('data').document('InfoDriver').get()
 
     if DOC.exists:
         data = DOC.to_dict()
@@ -172,7 +170,6 @@ class ComboBoxWithDialog(QWidget):
         
 class MultiSelectDialogDrive(QDialog):
     def __init__(self):
-
         super().__init__()
         self.setWindowTitle('Entregadores')
 
@@ -192,17 +189,18 @@ class MultiSelectDialogDrive(QDialog):
         self.checkboxes = []
         self.all_items = DELIVERY
         self.all_numbers = PHONE_NUMBER
-        self.all_addresses = ADDRESSES  
+        self.all_addresses = ADDRESSES
         
         for item, number, address in zip(DELIVERY, PHONE_NUMBER, ADDRESSES):
             checkbox = QCheckBox(item)
-            checkbox.number = number 
+            checkbox.number = number
             checkbox.address = address
+            checkbox.stateChanged.connect(self.uncheck_others)
             self.checkboxes.append(checkbox)
             self.scroll_layout.addWidget(checkbox)
 
         self.layout.addWidget(self.scroll_area)
-        
+
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
@@ -211,15 +209,21 @@ class MultiSelectDialogDrive(QDialog):
         self.setLayout(self.layout)
 
     def filter_items(self, text):
-
         for checkbox in self.checkboxes:
             checkbox.setVisible(text.lower() in checkbox.text().lower())
+
+    def uncheck_others(self, state):
+        if state == Qt.Checked:
+            sender = self.sender()
+            for checkbox in self.checkboxes:
+                if checkbox != sender:
+                    checkbox.setChecked(False)
 
     def get_selected_items(self):
         global SELECT_DELIVERY
         global SELECT_PHONE_NUMBER
         global SELECT_ADDRESS
-    
+
         SELECT_PHONE_NUMBER = [checkbox.number for checkbox in self.checkboxes if checkbox.isChecked()]
         SELECT_DELIVERY = [checkbox.text() for checkbox in self.checkboxes if checkbox.isChecked()]
         SELECT_ADDRESS = [checkbox.address for checkbox in self.checkboxes if checkbox.isChecked()]
@@ -236,16 +240,18 @@ class ComboBoxWithDialogDrive(QWidget):
         self.layout.addWidget(self.button)
         self.setLayout(self.layout)
         
-        self.selected_items = []
+        self.selected_item = None
 
     def open_multi_select_dialog_Drive(self):
         dialog = MultiSelectDialogDrive()
         if dialog.exec():
-            self.selected_items = dialog.get_selected_items()
-            if not self.selected_items:  
+            selected_items = dialog.get_selected_items()
+            if not selected_items:  
                 self.button.setText('Click para selecionar o entregador')
             else:
-                self.button.setText(', '.join(self.selected_items))                
+                self.selected_item = selected_items[0]
+                self.button.setText(self.selected_item)
+            
         
 class MouseCoordinateApp(QWidget):
     def __init__(self):
