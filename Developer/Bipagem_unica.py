@@ -524,7 +524,7 @@ class MouseCoordinateApp(QWidget):
         self.messagem.setStyleSheet("font-weight: bold; color: blue;")
         self.currently_setting_position = position
 
-    def KEYPRESS_EVENT(self, event):
+    def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
             if self.currently_setting_position:
                 x, y = pyautogui.position()
