@@ -14,6 +14,7 @@ import pygetwindow as gw
 
 from firebase_admin import credentials, firestore
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QFileDialog
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
@@ -38,7 +39,9 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QDialogButtonBox,
     QDialog,
-    QScrollArea
+    QScrollArea,
+    QSplashScreen,
+    QApplication
 )
 
 Version = "Github.com/dudurtg2 - Digital Versão 2.4"
@@ -49,7 +52,7 @@ def get_resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 json_file_path = get_resource_path('service-account-credentials.json')
-json_offline_file_path = "Data/service-account-credentials.json"
+json_offline_file_path = "Developer/Data/service-account-credentials.json"
 
 with open(json_file_path) as json_file:
     data = json.load(json_file)
@@ -970,6 +973,13 @@ def INSERT_EVENT(barCode, x, y, x2, y2, tempo1, tempo2, tempTwo, tempOne):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    splash_image = QPixmap(os.path.join(os.path.abspath("."), "loading_image.png")) 
+    splash = QSplashScreen(splash_image)
+    splash.show()
+    
     widget = MouseCoordinateApp()
     widget.show()
+
+    splash.finish(widget)
     sys.exit(app.exec_())
