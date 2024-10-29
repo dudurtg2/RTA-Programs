@@ -54,7 +54,7 @@ def get_resource_path(relative_path):
 json_file_path = get_resource_path('service-account-credentials.json')
 json_offline_file_path = "Developer/Data/service-account-credentials.json"
 
-with open(json_file_path) as json_file:
+with open(json_offline_file_path) as json_file:
     data = json.load(json_file)
     service_account_info = data['google_service_account']
     firebase_credentials = data['firebase']
@@ -783,23 +783,32 @@ class MouseCoordinateApp(QWidget):
         except Exception as e:
             QMessageBox.information(self, "Error", "Erro ao inicializar Firebase: " + {e})
             return
+       
+        global NOME_ENTREGADOR, NUMERO_ENTREGADOR
+
+        if SELECTMODE:
+            NOME_ENTREGADOR = self.entregador_input.text()
+            NUMERO_ENTREGADOR = "75900000000"
+        else:
+            NOME_ENTREGADOR = SELECT_DELIVERY[0]
+            NUMERO_ENTREGADOR = SELECT_PHONE_NUMBER[0]
         
         if AVAILABLEFORUPDATE:
             try:   
                 db.collection('bipagem').document(formatted_code).set({
-                    'Empresa': self.empresa_box.currentText(),
-                    'Funcionario': self.nome_input.text(),
-                    'Entregador': self.entregador_input.text(),
-                    'Local': self.combo_box.button.text().upper(),
-                    'Codigo_de_ficha': formatted_code,
-                    'Hora_e_Dia': formatted_now,
-                    'Quantidade': self.counter_label.text(),
-                    'Inicio': "aguardando",
-                    'Fim': "aguardando",
-                    'Status': "aguardando",
-                    'Motorista': "aguardando",
-                    'Codigos inseridos': self.insertedBarCodes,
-                    'Download_link': public_url
+                    'empresa': self.empresa_box.currentText(),
+                    'funcionario': self.nome_input.text(),
+                    'entregador': NOME_ENTREGADOR,
+                    'telefone': NUMERO_ENTREGADOR,
+                    'local': self.combo_box.button.text().upper(),
+                    'codigodeficha': formatted_code,
+                    'horaedia': formatted_now,
+                    'quantidade': str(len(self.insertedBarCodes)),
+                    'status': "aguardando",
+                    'motorista': "aguardando",
+                    'codigosinseridos': self.insertedBarCodes,
+                    'downloadlink': public_url,
+
                 })
 
             except Exception as e:
@@ -829,7 +838,16 @@ class MouseCoordinateApp(QWidget):
 
                     self.MENSAGEM_ALERT("success", "EL_b")
 
-                    locate = ", Entregador "
+                    global NOME_ENTREGADOR, NUMERO_ENTREGADOR
+
+                    if SELECTMODE:
+                        NOME_ENTREGADOR = self.entregador_input.text()
+                        NUMERO_ENTREGADOR = "75900000000"
+                    else:
+                        NOME_ENTREGADOR = SELECT_DELIVERY[0]
+                        NUMERO_ENTREGADOR = SELECT_PHONE_NUMBER[0]
+
+                    locate = ", " + NOME_ENTREGADOR
 
                     if self.cidade_label.text() == "Local:" or self.cidade_label.text() == "Devolução:": 
                         locate = ", Destino "
