@@ -9,6 +9,7 @@ import os
 import qrcode
 import io
 import firebase_admin
+import requests
 
 import pygetwindow as gw
 
@@ -47,75 +48,134 @@ from PyQt5.QtWidgets import (
 Version = "Github.com/dudurtg2 - Digital Versão 2.6"
 
 def get_resource_path(relative_path):
-    try: base_path = sys._MEIPASS
-    except Exception: base_path = os.path.abspath(".")
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
-
 json_file_path = get_resource_path('service-account-credentials.json')
 json_offline_file_path = "Developer/Data/service-account-credentials.json"
 
 with open(json_offline_file_path) as json_file:
     data = json.load(json_file)
     service_account_info = data['google_service_account']
-    firebase_credentials = data['firebase']
 
-firebase_admin.initialize_app(credentials.Certificate(firebase_credentials))
+# Configurações da API
+API_BASE_URL = "http://carlo4664.c44.integrator.host:10500"
+LOGIN_URL = f"{API_BASE_URL}/auth/login"
+CIDADES_URL = f"{API_BASE_URL}/api/cidades/findAll"
+ENTREGADORES_URL = f"{API_BASE_URL}/api/entregadores/findAll"
+EMPRESAS_URL = f"{API_BASE_URL}/api/empresas/findAll"
 
-DATA_BASE = firestore.client()
+# Credenciais para login na API
+LOGIN_PAYLOAD = {
+    "login": "carlos.e.o.savegnago@gmail.com",
+    "senha": "DUdu@147"
+}
 
-LOCALES = DATA_BASE.collection('data').document('infoLocale').get().to_dict() # pega os locais
-KEYS = DATA_BASE.collection('data').document('KeyFolderDrive').get().to_dict() # pega as chaves do drive folders
-INFO_ENTERPRISE = DATA_BASE.collection('data').document('InfoBase').get().to_dict() # pega a empresa
-INFO_BASE = DATA_BASE.collection('data').document('infoDefault').get().to_dict().get("PRIMARY_BASE")
-INFO_DELIVERY = DATA_BASE.collection('data').document('InfoDriver').get()
+# Função para obter o token de acesso
+def get_access_token(login_url, payload):
+    response = requests.post(login_url, json=payload)
+    response.raise_for_status()
+    return response.json().get("accessToken")
 
+# Função para buscar dados da API usando o token de acesso
+def fetch_data(api_url, token):
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.get(api_url, headers=headers)
+    response.raise_for_status()
+    return response.json()
+
+# Obtendo o token de acesso
+access_token = get_access_token(LOGIN_URL, LOGIN_PAYLOAD)
+
+# Obtendo dados das APIs
+cidades_data = fetch_data(CIDADES_URL, access_token)
+entregadores_data = fetch_data(ENTREGADORES_URL, access_token)
+empresas_data = fetch_data(EMPRESAS_URL, access_token)
+
+# Estruturas de dados substituindo o Firebase
+LOCALES = {}
+KEYS = {}
+INFO_ENTERPRISE = {"EMPRESAS-SERVICO": []}
+INFO_BASE = ""
 BASE = []
 KEY_PATH = []
 ALL_LOCALE = []
 BASE_MAPPING = {}
+INFO_DELIVERY = []
 
-for city_name, data in LOCALES.items():
-    info_region = data.get("INFO_LOCALE_REGION")
-    info_key = data.get("KEY_PATH")  
+# Processando dados das cidades e bases
+for cidade in cidades_data:
+    regiao = cidade["regiao"]
+    base = regiao["base"]
+    regiao_nome = regiao["nome"]
+
+    if regiao_nome not in LOCALES:
+        LOCALES[regiao_nome] = {
+            "LOCALES": [],
+            "AVAILABLEFORUPDATE": True,
+            "INFO_LOCALE_REGION": regiao_nome,
+            "PREFIX": regiao["prefixo"],
+            "KEY_PATH": base["googledriver"]
+        }
+
+    LOCALES[regiao_nome]["LOCALES"].append(cidade["nome"])
+    KEYS[base["googledriver"]] = base["googledriver"]
+
+for regiao, data in LOCALES.items():
     locais = data.get("LOCALES", [])
-    
-    if info_region:
-        BASE.append(info_region)
-        KEY_PATH.append(info_key)
+    info_key = data.get("KEY_PATH")
+    available_for_update = data.get("AVAILABLEFORUPDATE", False)
 
-    key_value = KEYS.get(info_key, None) 
-    available_for_update = data.get("AVAILABLEFORUPDATE", False) 
+    BASE.append(regiao)
+    KEY_PATH.append(info_key)
 
-    BASE_MAPPING[info_region] = (locais, data.get("PREFIX"), key_value, available_for_update)
+    BASE_MAPPING[regiao] = (
+        locais,
+        data.get("PREFIX"),
+        KEYS.get(info_key, None),
+        available_for_update
+    )
 
     ALL_LOCALE.extend(locais)
+
+# Processando dados das empresas
+INFO_ENTERPRISE["EMPRESAS-SERVICO"].extend(
+    [empresa["nome"] for empresa in empresas_data]
+)
+
+# Processando entregadores
+INFO_DELIVERY = [
+    {
+        "fullName": entregador["nome"],
+        "mobileNumber": entregador["telefone"],
+        "endereco": entregador["endereco"]
+    }
+    for entregador in entregadores_data
+]
+
+DELIVERY = [d["fullName"] for d in INFO_DELIVERY]
+PHONE_NUMBER = [d["mobileNumber"] for d in INFO_DELIVERY]
+ADDRESSES = [d["endereco"] for d in INFO_DELIVERY]
+
+# Configurações padrão
+INFO_DEFAULT = next(iter(LOCALES.keys()), None)  # Obtém a primeira região como padrão
+INFO_BASE = INFO_DEFAULT
 
 if INFO_BASE in BASE:
     BASE.remove(INFO_BASE)
     BASE.insert(0, INFO_BASE)
 BASE[1:] = sorted(BASE[1:])
 
-def fetch_deliverers():
-    if INFO_DELIVERY.exists:
-        data = INFO_DELIVERY.to_dict()
-        DELIVERY = [d['fullName'] for d in data['deliverer']]
-        PHONE_NUMBER = [d['mobileNumber'] for d in data['deliverer']]
-        ADDRESSES = [d['endereco'] for d in data['deliverer']]
-        return DELIVERY, PHONE_NUMBER, ADDRESSES
-    else:
-        return [], [], []
-
+KEYFOLDERDEFAULT = KEYS.get(LOCALES.get(INFO_DEFAULT, {}).get("KEY_PATH"))
+AVAILABLEFORUPDATE = LOCALES.get(INFO_DEFAULT, {}).get("AVAILABLEFORUPDATE")
+SELECT_CITY = LOCALES.get(INFO_DEFAULT, {}).get("LOCALES", [])
 EMPRESA = INFO_ENTERPRISE.get("EMPRESAS-SERVICO", [])
 
-INFO_DEFAULT = DATA_BASE.collection('data').document('infoDefault').get().to_dict().get("PRIMARY_LOCALE") # pega os componentes primarios 
-
-KEYFOLDERDEFAULT = KEYS.get(LOCALES.get(INFO_DEFAULT, {}).get("KEY_PATH")) #chave do driver folder primaria
-AVAILABLEFORUPDATE = LOCALES.get(INFO_DEFAULT, {}).get("AVAILABLEFORUPDATE") 
-SELECT_CITY = LOCALES.get(INFO_DEFAULT, {}).get("LOCALES", [])
-
-DELIVERY, PHONE_NUMBER, ADDRESSES = fetch_deliverers()
-
 SELECTMODE = False
+
+print(AVAILABLEFORUPDATE)
 
 class MultiSelectDialog(QDialog):
     def __init__(self, items):
