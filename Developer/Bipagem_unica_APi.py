@@ -45,7 +45,7 @@ from PyQt5.QtWidgets import (
     QApplication
 )
 
-Version = "Github.com/dudurtg2 - Digital Versão 2.6"
+Version = "Github.com/dudurtg2 - Build 02v03a"
 
 def get_resource_path(relative_path):
     try:
@@ -56,7 +56,7 @@ def get_resource_path(relative_path):
 json_file_path = get_resource_path('service-account-credentials.json')
 json_offline_file_path = "Developer/Data/service-account-credentials.json"
 
-with open(json_offline_file_path) as json_file:
+with open(json_file_path) as json_file:
     data = json.load(json_file)
     service_account_info = data['google_service_account']
 
@@ -74,12 +74,21 @@ LOGIN_PAYLOAD = {
 }
 
 # Função para obter o token de acesso
-def get_access_token(login_url, payload):
+def get_access_token_and_id(login_url, payload):
     response = requests.post(login_url, json=payload)
     response.raise_for_status()
-    return response.json().get("accessToken")
+    response_data = response.json()
+    
+    
+    access_token = response_data.get("accessToken")
+    refresh_token = response_data.get("refreshToken")
+    user_id = response_data.get("data", {}).get("info", {}).get("id")
+    nome_id = response_data.get("data", {}).get("info", {}).get("nome")
+    base_id = response_data.get("data", {}).get("info", {}).get("base", {}).get("id")
+    
+    return access_token, user_id, base_id, refresh_token, nome_id
 
-# Função para buscar dados da API usando o token de acesso
+
 def fetch_data(api_url, token):
     headers = {"Authorization": f"Bearer {token}"}
     response = requests.get(api_url, headers=headers)
@@ -87,7 +96,7 @@ def fetch_data(api_url, token):
     return response.json()
 
 # Obtendo o token de acesso
-access_token = get_access_token(LOGIN_URL, LOGIN_PAYLOAD)
+access_token, user_id, base_id, refresh_token, nome_id = get_access_token_and_id(LOGIN_URL, LOGIN_PAYLOAD)
 
 # Obtendo dados das APIs
 cidades_data = fetch_data(CIDADES_URL, access_token)
@@ -101,7 +110,10 @@ INFO_ENTERPRISE = {"EMPRESAS-SERVICO": []}
 INFO_BASE = ""
 BASE = []
 KEY_PATH = []
+CIDADES_ID_MAP = {}
+EMPRESA_ID_MAP = {}
 ALL_LOCALE = []
+CIDADES = [] 
 BASE_MAPPING = {}
 INFO_DELIVERY = []
 
@@ -110,6 +122,11 @@ for cidade in cidades_data:
     regiao = cidade["regiao"]
     base = regiao["base"]
     regiao_nome = regiao["nome"]
+    nome_cidade = cidade["nome"]
+    id_cidade = cidade["id"]
+
+    CIDADES.append(nome_cidade)
+    CIDADES_ID_MAP[nome_cidade] = id_cidade
 
     if regiao_nome not in LOCALES:
         LOCALES[regiao_nome] = {
@@ -141,6 +158,17 @@ for regiao, data in LOCALES.items():
     ALL_LOCALE.extend(locais)
 
 # Processando dados das empresas
+EMPRESA = [
+    {
+        "nome": empresa["nome"],
+        "id": empresa["id"]
+    }
+    for empresa in empresas_data
+]
+
+# Mapeando os nomes das empresas para os IDs
+EMPRESA_ID_MAP = {empresa["nome"]: empresa["id"] for empresa in EMPRESA}
+
 INFO_ENTERPRISE["EMPRESAS-SERVICO"].extend(
     [empresa["nome"] for empresa in empresas_data]
 )
@@ -150,14 +178,17 @@ INFO_DELIVERY = [
     {
         "fullName": entregador["nome"],
         "mobileNumber": entregador["telefone"],
-        "endereco": entregador["endereco"]
+        "endereco": entregador["endereco"],
+        "id": entregador["id"]
     }
     for entregador in entregadores_data
 ]
 
 DELIVERY = [d["fullName"] for d in INFO_DELIVERY]
+DELIVERY_ID = [d["id"] for d in INFO_DELIVERY]
 PHONE_NUMBER = [d["mobileNumber"] for d in INFO_DELIVERY]
 ADDRESSES = [d["endereco"] for d in INFO_DELIVERY]
+
 
 # Configurações padrão
 INFO_DEFAULT = next(iter(LOCALES.keys()), None)  # Obtém a primeira região como padrão
@@ -265,11 +296,13 @@ class MultiSelectDialogDrive(QDialog):
         self.all_items = DELIVERY
         self.all_numbers = PHONE_NUMBER
         self.all_addresses = ADDRESSES
+        self.all_delivery_id = DELIVERY_ID
         
-        for item, number, address in zip(DELIVERY, PHONE_NUMBER, ADDRESSES):
+        for item, number, address, delivery_id in zip(DELIVERY, PHONE_NUMBER, ADDRESSES, DELIVERY_ID):
             checkbox = QCheckBox(item)
             checkbox.number = number
             checkbox.address = address
+            checkbox.delivery_id = delivery_id
             checkbox.stateChanged.connect(self.uncheck_others)
             self.checkboxes.append(checkbox)
             self.scroll_layout.addWidget(checkbox)
@@ -298,10 +331,12 @@ class MultiSelectDialogDrive(QDialog):
         global SELECT_DELIVERY
         global SELECT_PHONE_NUMBER
         global SELECT_ADDRESS
+        global SELECT_DELIVERY_ID
 
         SELECT_PHONE_NUMBER = [checkbox.number for checkbox in self.checkboxes if checkbox.isChecked()]
         SELECT_DELIVERY = [checkbox.text() for checkbox in self.checkboxes if checkbox.isChecked()]
         SELECT_ADDRESS = [checkbox.address for checkbox in self.checkboxes if checkbox.isChecked()]
+        SELECT_DELIVERY_ID = [checkbox.delivery_id for checkbox in self.checkboxes if checkbox.isChecked()]
         return SELECT_DELIVERY
 
 class ComboBoxWithDialogDrive(QWidget):
@@ -345,16 +380,13 @@ class MouseCoordinateApp(QWidget):
         self.layout.addWidget(self.messagem)
 
         self.layout_nome = QHBoxLayout()
-        self.nome_label = QLabel("Funcionario:")
-        self.nome_input = QLineEdit()
+        
+        self.nome_input = QLabel()
+        self.nome_input.setText(nome_id)
+        self.nome_input.setStyleSheet("font-weight: bold; text-align: center;")
 
-        self.layout_nome.addWidget(self.nome_label)
         self.layout_nome.addWidget(self.nome_input)
 
-        self.botao_liga_desliga = QPushButton("Digitar", self)
-
-        self.layout_nome.addWidget(self.botao_liga_desliga)
-        
         self.layout.addLayout(self.layout_nome)
         
         self.layout_entregador = QHBoxLayout()
@@ -551,7 +583,6 @@ class MouseCoordinateApp(QWidget):
         self.positions = {}
         self.counter = 0
 
-        self.botao_liga_desliga.clicked.connect(self.TOGGLE_BUTTON_EVENT)
         self.base_combo_box.currentIndexChanged.connect(self.SELECT_BASE_EVENT)
         self.button1.clicked.connect(lambda: self.SET_POSITION_EVENT("pos1"))
         self.button2.clicked.connect(lambda: self.SET_POSITION_EVENT("pos2"))
@@ -567,22 +598,7 @@ class MouseCoordinateApp(QWidget):
 
         self.MAKE_WIDGETS_VISIBLE_EVENT(self.layout_entregador, False)
         
-    def TOGGLE_BUTTON_EVENT(self):
-        global SELECTMODE
-        SELECTMODE = not SELECTMODE
     
-        if SELECTMODE:
-            print(SELECTMODE)
-            self.botao_liga_desliga.setText("Selecionar")
-            self.MAKE_WIDGETS_VISIBLE_EVENT(self.layout_entregador, True)
-            self.MAKE_WIDGETS_VISIBLE_EVENT(self.layout_drive, False)
-            self.is_entregador_visible = True 
-        else:
-            print(SELECTMODE)
-            self.botao_liga_desliga.setText("Digitar")
-            self.MAKE_WIDGETS_VISIBLE_EVENT(self.layout_entregador, not self.is_entregador_visible)
-            self.MAKE_WIDGETS_VISIBLE_EVENT(self.layout_drive, self.is_entregador_visible)
-            self.is_entregador_visible = not self.is_entregador_visible 
              
     def MAKE_WIDGETS_VISIBLE_EVENT(self, layout, visible):
         for i in range(layout.count()):
@@ -733,7 +749,8 @@ class MouseCoordinateApp(QWidget):
         PDF_FILE.setFont("Helvetica", signature_font_size)
         PDF_FILE.drawString(70, 630, "Assinatura: ____________________________ Data: __/__/____")
         PDF_FILE.setFont("Helvetica", default_font_size)
-
+        
+        
         PDF_FILE.drawString(70, 610, self.cidade_label.text() + " " + self.combo_box.button.text().upper())
         if not SELECTMODE:
             
@@ -774,6 +791,49 @@ class MouseCoordinateApp(QWidget):
 
         return PDF_FILE
 
+
+    def UPDATE_API(self, formatted_code, public_url):
+        global NOME_ENTREGADOR, NUMERO_ENTREGADOR, ENDERECO_ENTREGADOR, ID_ENTREGADOR
+
+        if SELECTMODE:
+            NOME_ENTREGADOR = self.entregador_input.text()
+            NUMERO_ENTREGADOR = "75900000000"
+            ENDERECO_ENTREGADOR = "Endereco do entregador não definido"
+        else:
+            NOME_ENTREGADOR = SELECT_DELIVERY[0]
+            NUMERO_ENTREGADOR = SELECT_PHONE_NUMBER[0]
+            ENDERECO_ENTREGADOR = SELECT_ADDRESS[0]
+            ID_ENTREGADOR = SELECT_DELIVERY_ID[0]
+
+        if AVAILABLEFORUPDATE:
+            try:
+                payload = {
+                    "codigoUid": formatted_code,
+                    "linkDownload": public_url,
+                    "empresa": EMPRESA_ID_MAP[self.empresa_box.currentText()],
+                    "base": base_id,
+                    "entregador": ID_ENTREGADOR,
+                    "funcionario": user_id,
+                    "cidade": CIDADES_ID_MAP.get(self.combo_box.button.text().split(",")[0].strip().upper(), None),
+                    "codigos": [{"codigo": codigo} for codigo in self.insertedBarCodes]
+                }
+
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
+                }
+
+                response = requests.post("http://carlo4664.c44.integrator.host:10500/api/romaneios/save", json=payload, headers=headers)
+                response.raise_for_status()  
+
+                if response.status_code != 201:
+                    QMessageBox.information(self, "Erro", f"Erro ao salvar dados: {response.text}")
+
+            except Exception as e:
+                QMessageBox.information(self, "Erro", f"Erro ao salvar dados no Firestore: {e}")
+        else:
+            pass
+
     def UPDATE_DRIVER(self, folder_date, folder_name, folder_first, folder_zero, file_path):
         try:
             credentials_drive = service_account.Credentials.from_service_account_info(service_account_info, scopes=["https://www.googleapis.com/auth/drive"])
@@ -804,6 +864,7 @@ class MouseCoordinateApp(QWidget):
                 return folder["id"]
 
         try:
+            print(SELECT_DELIVERY_ID[0])
             main_folder_id = find_or_create_folder(folder_date, KEYFOLDERDEFAULT)
             folder_zero_id = find_or_create_folder(folder_zero, main_folder_id)
 
@@ -843,54 +904,7 @@ class MouseCoordinateApp(QWidget):
             QMessageBox.information(self, "Error", "Erro ao enviar arquivo para o Google Drive:\n " + {e})  
             return     
 
-    def UPDATE_FIREBASE(self, formatted_code, formatted_now, public_url):
-        try:
-            if not firebase_admin._apps:
-                cred = credentials.Certificate(firebase_credentials)
-                firebase_admin.initialize_app(cred)
-                
-            db = firestore.client()
-
-        except Exception as e:
-            QMessageBox.information(self, "Error", "Erro ao inicializar Firebase: " + {e})
-            return
-       
-        global NOME_ENTREGADOR, NUMERO_ENTREGADOR, ENDERECO_ENTREGADOR
-
-        if SELECTMODE:
-            NOME_ENTREGADOR = self.entregador_input.text()
-            NUMERO_ENTREGADOR = "75900000000"
-            ENDERECO_ENTREGADOR = "Endereco do entregador não definido"
-        else:
-            NOME_ENTREGADOR = SELECT_DELIVERY[0]
-            NUMERO_ENTREGADOR = SELECT_PHONE_NUMBER[0]
-            ENDERECO_ENTREGADOR = SELECT_ADDRESS[0]
-        
-        if AVAILABLEFORUPDATE:
-            try:   
-                db.collection('bipagem').document(formatted_code).set({
-                    'empresa': self.empresa_box.currentText(),
-                    'motorista': "aguardando",
-                    'entregador': NOME_ENTREGADOR,
-                    'funcionario': self.nome_input.text(),
-                    'telefone': NUMERO_ENTREGADOR,
-                    'local': self.combo_box.button.text().upper(),
-                    'codigodeficha': formatted_code,
-                    'horaedia': formatted_now,
-                    'status': "aguardando",
-                    'lacre': self.lacre_input.text(),
-                    'quantidade': str(len(self.insertedBarCodes)),
-                    'codigosinseridos': self.insertedBarCodes,
-                    'downloadlink': public_url,
-                    'endereco': ENDERECO_ENTREGADOR,
-
-                })
-
-            except Exception as e:
-                QMessageBox.information(self, "Error", "Erro ao salvar dados no Firestore: " + {e})
-                return
-        else:
-            pass
+    
 
     def EXPORT_LIST(self):
         global AVAILABLEFORUPDATE, KEYFOLDERDEFAULT
@@ -931,7 +945,7 @@ class MouseCoordinateApp(QWidget):
                         file_path, _ = QFileDialog.getSaveFileName(
                                 self,
                                 "Salvar Lista",
-                                formatted_code + locate + self.entregador_input.text().upper() + ", " +DATE_NOW.strftime("%d-%m-%Y"),
+                                formatted_code + ", "+ self.combo_box.button.text().upper() + ", " +DATE_NOW.strftime("%d-%m-%Y"),
                                 "PDF Files (*.pdf);;All Files (*)",
                                 options = QFileDialog.Options(),
                             )
@@ -939,7 +953,7 @@ class MouseCoordinateApp(QWidget):
                         if file_path:
                             self.PDF_CREATE(file_path, formatted_now ,formatted_code).save()
                             public_url = self.UPDATE_DRIVER(folder_date, folder_name, folder_first, folder_zero, file_path)
-                            self.UPDATE_FIREBASE(formatted_code, formatted_now, public_url)
+                            self.UPDATE_API(formatted_code, public_url)
 
                             QMessageBox.information(self, "Sucesso", f"Romaneio salvo com sucesso.")
 
