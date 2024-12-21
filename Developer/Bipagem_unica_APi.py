@@ -56,7 +56,7 @@ def get_resource_path(relative_path):
 json_file_path = get_resource_path('service-account-credentials.json')
 json_offline_file_path = "Developer/Data/service-account-credentials.json"
 
-with open(json_file_path) as json_file:
+with open(json_offline_file_path) as json_file:
     data = json.load(json_file)
     service_account_info = data['google_service_account']
 
@@ -808,15 +808,20 @@ class MouseCoordinateApp(QWidget):
         if AVAILABLEFORUPDATE:
             try:
                 payload = {
-                    "codigoUid": formatted_code,
-                    "linkDownload": public_url,
-                    "empresa": EMPRESA_ID_MAP[self.empresa_box.currentText()],
-                    "base": base_id,
-                    "entregador": ID_ENTREGADOR,
-                    "funcionario": user_id,
-                    "cidade": CIDADES_ID_MAP.get(self.combo_box.button.text().split(",")[0].strip().upper(), None),
-                    "codigos": [{"codigo": codigo} for codigo in self.insertedBarCodes]
-                }
+                        "codigoUid": formatted_code,
+                        "linkDownload": public_url,
+                        "empresa": EMPRESA_ID_MAP[self.empresa_box.currentText()],
+                        "base": base_id,
+                        "entregador": ID_ENTREGADOR,
+                        "funcionario": user_id,
+                        
+                        "cidade": [
+                            CIDADES_ID_MAP.get(cidade.strip().upper(), None) 
+                            for cidade in self.combo_box.button.text().split(",") 
+                            if cidade.strip() 
+                        ],
+                        "codigos": [{"codigo": codigo} for codigo in self.insertedBarCodes]
+                    }
 
                 headers = {
                     "Authorization": f"Bearer {access_token}",
