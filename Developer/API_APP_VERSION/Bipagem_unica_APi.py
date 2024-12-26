@@ -92,7 +92,7 @@ if LOGIN_PAYLOAD['login'] == 'a':
 
     login_window.mainloop()
 
-API_BASE_URL = "http://carlo4664.c44.integrator.host:10500"
+API_BASE_URL = "https://api.avalonstudios-rta.site/"
 LOGIN_URL = f"{API_BASE_URL}/auth/login"
 CIDADES_URL = f"{API_BASE_URL}/api/cidades/findAll"
 ENTREGADORES_URL = f"{API_BASE_URL}/api/entregadores/findAll"
